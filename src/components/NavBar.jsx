@@ -1,9 +1,9 @@
 import { useState } from 'react'
 
 const links = [
+  { href: '#precios', label: 'Precio del oro' },
   { href: '#servicios', label: 'Servicios' },
   { href: '#como-funciona', label: 'Cómo funciona' },
-  { href: '#precios', label: 'Precio del oro' },
   { href: '#quienes-somos', label: 'Quiénes somos' },
   { href: '#contacto', label: 'Contacto' },
 ]
