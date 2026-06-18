@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useConsent, saveConsent } from '../cookieConsent'
 
 const CONFIGS = {
   gold: {
@@ -18,8 +19,11 @@ const CONFIGS = {
 export default function TradingViewChart({ metal = 'gold' }) {
   const containerRef = useRef(null)
   const cfg = CONFIGS[metal]
+  const consent = useConsent()
+  const allowed = !!consent?.analytics
 
   useEffect(() => {
+    if (!allowed) return
     const el = containerRef.current
     if (!el) return
     el.innerHTML = ''
@@ -61,7 +65,7 @@ export default function TradingViewChart({ metal = 'gold' }) {
     el.appendChild(script)
 
     return () => { el.innerHTML = '' }
-  }, [metal, cfg.symbols, cfg.lineColor, cfg.topColor, cfg.bottomColor])
+  }, [allowed, metal, cfg.symbols, cfg.lineColor, cfg.topColor, cfg.bottomColor])
 
   return (
     <div className="tv-chart-outer">
@@ -71,10 +75,25 @@ export default function TradingViewChart({ metal = 'gold' }) {
         </span>
         Gráfico {metal === 'gold' ? 'oro' : 'plata'} · EUR/oz · TradingView
       </div>
-      <div
-        className="tradingview-widget-container tv-chart-embed"
-        ref={containerRef}
-      />
+      {allowed ? (
+        <div
+          className="tradingview-widget-container tv-chart-embed"
+          ref={containerRef}
+        />
+      ) : (
+        <div className="tv-chart-blocked">
+          <p>
+            El gráfico de cotizaciones usa cookies de terceros (TradingView). Acepta las cookies de
+            análisis para visualizarlo.
+          </p>
+          <button
+            className="btn-primary"
+            onClick={() => saveConsent({ analytics: true, advertising: true })}
+          >
+            Aceptar y ver el gráfico
+          </button>
+        </div>
+      )}
     </div>
   )
 }

@@ -153,7 +153,7 @@ export default function Contact() {
                 </svg>
               </button>
               <p className="form-privacy">
-                Al enviar aceptas nuestra <a href="#">política de privacidad</a>.
+                Al enviar aceptas nuestra <a href="#/politica-de-privacidad">política de privacidad</a>.
               </p>
             </form>
           )}

@@ -1,3 +1,5 @@
+import { openCookieSettings } from '../cookieConsent'
+
 export default function Footer() {
   return (
     <footer className="footer">
@@ -49,9 +51,13 @@ export default function Footer() {
           © 2024 Te Quiero Metales S.L. · Todos los derechos reservados
         </div>
         <div className="footer-legal">
-          <a href="#">Política de Privacidad</a>
-          <a href="#">Aviso Legal</a>
-          <a href="#">Cookies</a>
+          <a href="#/aviso-legal">Aviso Legal</a>
+          <a href="#/politica-de-privacidad">Política de Privacidad</a>
+          <a href="#/politica-de-cookies">Cookies</a>
+          <a href="#/condiciones-de-venta">Condiciones de Venta</a>
+          <button type="button" className="footer-legal-btn" onClick={openCookieSettings}>
+            Configurar cookies
+          </button>
         </div>
       </div>
     </footer>
