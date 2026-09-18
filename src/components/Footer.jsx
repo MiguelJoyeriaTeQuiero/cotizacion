@@ -1,4 +1,5 @@
 import { openCookieSettings } from '../cookieConsent'
+import { ADDRESS, EMAILS, PHONES } from '../contactInfo'
 
 export default function Footer() {
   return (
@@ -34,15 +35,29 @@ export default function Footer() {
           <div className="footer-col-title">Contacto</div>
           <div className="footer-contact-row">
             <span className="footer-contact-icon">📞</span>
-            <div>922 263 470<br />822 178 368</div>
+            <div>
+              {PHONES.map((p, i) => (
+                <span key={p.tel}>
+                  {i > 0 && <br />}
+                  <a href={`tel:${p.tel}`}>{p.label}</a>
+                </span>
+              ))}
+            </div>
           </div>
           <div className="footer-contact-row">
             <span className="footer-contact-icon">✉️</span>
-            <div>info@tequierometales.com</div>
+            <div>
+              {EMAILS.map((email, i) => (
+                <span key={email}>
+                  {i > 0 && <br />}
+                  <a href={`mailto:${email}`}>{email}</a>
+                </span>
+              ))}
+            </div>
           </div>
           <div className="footer-contact-row">
             <span className="footer-contact-icon">📍</span>
-            <div>Santa Cruz de Tenerife</div>
+            <div>{ADDRESS.street}<br />{ADDRESS.city}</div>
           </div>
         </div>
       </div>

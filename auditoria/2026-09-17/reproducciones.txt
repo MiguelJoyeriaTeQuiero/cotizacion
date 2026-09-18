@@ -1,0 +1,30 @@
+[store] Sin Upstash configurado: usando almacén EN MEMORIA (solo desarrollo local).
+        Los cambios se pierden al reiniciar el servidor.
+COMPROBADO S01-documento-ajeno: {"asociacion":200,"borrado":200,"solicitoBorrarUrlAjena":true,"servicio":"Blob simulado, sin red"}
+COMPROBADO S02-codigo-doble-consumo: {"consumosAceptados":2}
+COMPROBADO S03-codigo-anterior-sigue-vivo: {"codigoAnteriorAceptadoTrasCambiarClave":true}
+COMPROBADO S04-sesion-admin-tras-rotacion: {"sesionAnteriorContinuaValida":true}
+COMPROBADO C01-publicaciones-simultaneas: {"respuestas":[200,200],"versiones":[2,2]}
+[market] mercado no disponible → GOLDAPI_KEY no configurada
+[store] getFormulas → fallo sintético de fórmulas
+COMPROBADO C02-indice-pierde-clientes: {"expedientesCreados":2,"visiblesEnIndice":1}
+COMPROBADO C03-revaloriza-y-confirma-con-mercado-obsoleto: {"primeraRespuesta":409,"segundaRespuesta":200,"resultado":"confirmado","antiguedadMercadoHoras":24}
+COMPROBADO C04-fallback-formulas-operativo: {"ok":true,"stale":false,"version":1,"usoFormulasDeRespaldo":true}
+COMPROBADO C05-referencia-se-repite-al-anio: {"mismaReferencia":"TQM-1709-0001","originalSobrescrito":true}
+COMPROBADO S05-formula-en-csv: {"celdaDeTextoExportadaComoFormula":"=1+1"}
+COMPROBADO C06-redondeo-web-servidor: {"gramos":1000,"resumenPortal":70798.79,"totalServidor":70800,"diferencia":-1.21}
+COMPROBADO C07-peso-positivo-redondea-a-cero: {"entrada":0.0001,"aceptado":true,"gramosGuardados":0}
+COMPROBADO P01-estampida-cache-mercado: {"peticionesConcurrentes":5,"llamadasProveedorSimulado":10,"necesariasConCoordinacion":2}
+COMPROBADO S06-limite-json-preparseado: {"limiteDeclarado":1024,"textoAceptado":70000}
+COMPROBADO S07-cookie-malformada: {"cookieNoRelacionadaRompeParser":true}
+COMPROBADO S08-origen-confia-en-forwarded-host: {"aceptado":true,"alcance":"unidad; depende de que el proxy permita esa cabecera"}
+COMPROBADO S09-login-propio-borra-limite-ip: {"intentosAntes":1,"intentosDespues":0}
+COMPROBADO S10-alta-enumera-sin-consumir-cupo: {"respuestas":[409,409,409,409,409,409,409],"cupoConsumido":0}
+COMPROBADO C08-confirmacion-y-anulacion-concurrentes: {"respuestas":[{"status":200,"estado":"confirmado"},{"status":200,"estado":"anulado"}],"persistido":"anulado"}
+COMPROBADO C09-ajuste-recalcula-con-formula-nueva: {"precioReservado":70.8,"precioAjustado":80.8,"versionRegistrada":1,"formulaAplicada":99}
+COMPROBADO C10-pdf-24-lineas-sale-de-pagina: {"lineas":24,"textoFueraDePagina":true,"coordenadaMinima":-17.11}
+COMPROBADO C11-csp-bloquea-sdk-blob: {"destinoSdkInstalado":"https://vercel.com/api/blob","permitidoEnConnectSrc":false,"alcance":"código y configuración, sin despliegue real"}
+{
+  "comprobaciones": 22,
+  "reproducidas": 22
+}

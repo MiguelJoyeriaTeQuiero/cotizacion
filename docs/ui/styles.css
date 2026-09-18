@@ -1,0 +1,28 @@
+:root { color-scheme: light; --ink: #172b28; --muted: #536560; --line: #dbe2df; --paper: #f5f7f6; }
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--ink); background: #fff; font: 15px/1.6 system-ui, sans-serif; }
+a { color: #145f53; text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, select:focus-visible { outline: 3px solid #ce9e35; outline-offset: 4px; }
+.docs-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px 4%; border-bottom: 1px solid var(--line); background: #fff; }
+.brand { text-decoration: none; font-weight: 800; letter-spacing: .03em; font-size: 23px; }
+.brand span { display: inline-block; margin-left: 14px; font-size: 14px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+nav { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+nav a { font-size: 14px; text-decoration: none; }
+.status { padding: 12px 4%; background: #eaf3ee; color: #245342; font-size: 13px; overflow-wrap: anywhere; }
+.status.pending { background: #fff0d4; color: #754c09; }
+.swagger-ui .topbar { background: var(--ink); padding: 12px 0; }
+.swagger-ui .topbar .download-url-wrapper select { border-color: #b8d0c7; }
+.swagger-ui .information-container { background: #fff; }
+.swagger-ui .info { margin: 32px 0; }
+.swagger-ui .info .title { color: var(--ink); font-size: 30px; }
+.swagger-ui .opblock-tag { font-size: 21px; }
+.guide { max-width: 1040px; padding: 36px 28px 96px; margin: 0 auto; overflow-wrap: anywhere; }
+.guide h1 { font-size: clamp(30px, 4vw, 42px); line-height: 1.15; margin-bottom: 24px; }
+.guide h2 { font-size: 24px; margin-top: 48px; border-top: 1px solid var(--line); padding-top: 24px; }
+.guide p, .guide li { max-width: 92ch; }
+.guide table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: 14px; margin: 24px 0; }
+.guide th, .guide td { text-align: left; vertical-align: top; border: 1px solid var(--line); padding: 10px 14px; min-width: 140px; }
+.guide th { background: var(--paper); }
+.guide pre { background: var(--ink); color: #f5f7f6; padding: 18px 22px; overflow-x: auto; border-radius: 4px; }
+.guide code { font: .9em/1.6 ui-monospace, monospace; }
+@media (max-width: 760px) { .docs-header { align-items: flex-start; flex-direction: column; gap: 14px; } .guide { padding: 24px 18px 60px; } .swagger-ui .info .title { font-size: 25px; } }

@@ -4,16 +4,36 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "predev": "npm run docs:generate",
     "dev": "vite --port 3000",
+    "demo": "node scripts/cliente-demo.mjs",
+    "prebuild": "npm run docs:generate && npm run docs:check",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "credenciales": "node scripts/crear-credenciales.mjs",
+    "test": "node scripts/pruebas/unidad.mjs && node scripts/pruebas/endpoints.mjs && node scripts/pruebas/memoria.mjs && node scripts/pruebas/cierres.mjs && node scripts/pruebas/clave.mjs",
+    "docs": "node scripts/docs.mjs serve",
+    "docs:generate": "node scripts/docs.mjs generate",
+    "docs:check": "node scripts/docs.mjs check",
+    "docs:review": "node scripts/docs.mjs review",
+    "test:docs": "node --test scripts/pruebas/documentacion.mjs"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
+    "@upstash/redis": "^1.38.2",
+    "@vercel/blob": "^2.8.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@apidevtools/swagger-parser": "13.0.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "marked": "18.0.13",
+    "swagger-ui-dist": "5.33.0",
     "vite": "^5.4.10"
   }
 }

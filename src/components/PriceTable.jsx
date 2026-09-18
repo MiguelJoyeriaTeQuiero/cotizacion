@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { GOLD_GRADES, SILVER_GRADES, goldGradePrice, silverGradePrice } from '../hooks/useMetalPrices'
 import TradingViewChart from './TradingViewChart'
 
 function ChangeChip({ pct }) {
@@ -14,7 +13,7 @@ function ChangeChip({ pct }) {
   )
 }
 
-function GoldTable({ fixingEurOz, dailyChange }) {
+function GradeTable({ grades, dailyChange, decimals }) {
   return (
     <div className="pt-wrap">
       <table className="pt-table">
@@ -27,67 +26,24 @@ function GoldTable({ fixingEurOz, dailyChange }) {
           </tr>
         </thead>
         <tbody>
-          {GOLD_GRADES.map(g => {
-            const price = goldGradePrice(fixingEurOz, g)
-            return (
-              <tr key={g.key}>
-                <td>
-                  <div className="pt-metal-cell">
-                    <span className="pt-karat">{g.label}</span>
-                  </div>
-                </td>
-                <td>
-                  <span className="pt-fineness">{g.fineness}‰</span>
-                </td>
-                <td>
-                  <span className="pt-price">€ {price.toFixed(2)}</span>
-                </td>
-                <td>
-                  <ChangeChip pct={dailyChange} />
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function SilverTable({ fixingEurOz, dailyChange }) {
-  return (
-    <div className="pt-wrap">
-      <table className="pt-table">
-        <thead>
-          <tr>
-            <th>Metal</th>
-            <th>Título</th>
-            <th>€ / gramo</th>
-            <th>Var. día</th>
-          </tr>
-        </thead>
-        <tbody>
-          {SILVER_GRADES.map(g => {
-            const price = silverGradePrice(fixingEurOz, g)
-            return (
-              <tr key={g.key}>
-                <td>
-                  <div className="pt-metal-cell">
-                    <span className="pt-karat">{g.label}</span>
-                  </div>
-                </td>
-                <td>
-                  <span className="pt-fineness">{g.fineness}‰</span>
-                </td>
-                <td>
-                  <span className="pt-price">€ {price.toFixed(3)}</span>
-                </td>
-                <td>
-                  <ChangeChip pct={dailyChange} />
-                </td>
-              </tr>
-            )
-          })}
+          {grades.map(g => (
+            <tr key={g.key}>
+              <td>
+                <div className="pt-metal-cell">
+                  <span className="pt-karat">{g.label}</span>
+                </div>
+              </td>
+              <td>
+                <span className="pt-fineness">{g.fineness}‰</span>
+              </td>
+              <td>
+                <span className="pt-price">€ {g.pricePerGram.toFixed(decimals)}</span>
+              </td>
+              <td>
+                <ChangeChip pct={dailyChange} />
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
@@ -96,7 +52,8 @@ function SilverTable({ fixingEurOz, dailyChange }) {
 
 export default function PriceTable({ metalData }) {
   const [tab, setTab] = useState('gold')
-  const { fixing, lastFetch, loading, dailyChangeGold, dailyChangeSilver } = metalData
+  const { fixing, gold, silver, change, lastFetch, loading } = metalData
+  const grades = tab === 'gold' ? gold : silver
 
   const fmtTime = (d) => d
     ? d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -160,15 +117,17 @@ export default function PriceTable({ metalData }) {
         {/* Table + Chart */}
         <div className="pt-body fade-up d2">
           <div className="pt-table-col">
-            {loading || !fixing ? (
+            {loading || !grades.length ? (
               <div className="pt-loading">
                 <span className="live-dot" style={{ width: 8, height: 8 }} />
                 Conectando con mercado…
               </div>
-            ) : tab === 'gold' ? (
-              <GoldTable fixingEurOz={fixing.gold} dailyChange={dailyChangeGold} />
             ) : (
-              <SilverTable fixingEurOz={fixing.silver} dailyChange={dailyChangeSilver} />
+              <GradeTable
+                grades={grades}
+                dailyChange={tab === 'gold' ? change.gold : change.silver}
+                decimals={tab === 'gold' ? 2 : 3}
+              />
             )}
           </div>
           <div className="pt-chart-col">

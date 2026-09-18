@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { GOLD_GRADES, SILVER_GRADES, goldGradePrice, silverGradePrice } from '../hooks/useMetalPrices'
 
 function Sparkline({ data }) {
   const { linePath, fillPath } = useMemo(() => {
@@ -46,10 +45,16 @@ function ChangeChip({ pct }) {
 }
 
 export default function PriceCard({ metalData }) {
-  const { fixing, lastFetch, dailyChangeGold, dailyChangeSilver, sparklineGold } = metalData
+  const { gold, silver, change, lastFetch, sparklineGold } = metalData
 
-  const gold24k   = fixing ? goldGradePrice(fixing.gold, GOLD_GRADES[0]) : null
-  const silver1000 = fixing ? silverGradePrice(fixing.silver, SILVER_GRADES[0]) : null
+  // La tarjeta destaca siempre el oro de 24k y la plata de 1000‰; si esas leyes
+  // se hubieran quitado del panel, cae a la primera fila de la tabla.
+  const topGold = gold?.find(g => g.key === 'au24') ?? gold?.[0] ?? null
+  const topSilver = silver?.find(g => g.key === 'ag1000') ?? silver?.[0] ?? null
+  const gold24k = topGold?.pricePerGram ?? null
+  const silver1000 = topSilver?.pricePerGram ?? null
+  const dailyChangeGold = change?.gold ?? 0
+  const dailyChangeSilver = change?.silver ?? 0
 
   const fmtTime = (d) => {
     if (!d) return '—'

@@ -1,130 +1,173 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 
-const API_KEY    = 'goldapi-15ndsmmev1jqo-io'
-const HEADERS    = { 'x-access-token': API_KEY, 'Content-Type': 'application/json' }
-const GOLD_URL   = 'https://www.goldapi.io/api/XAU/EUR'
-const SILVER_URL = 'https://www.goldapi.io/api/XAG/EUR'
-
-// Realistic fallback fixing prices in EUR/oz
-const FB_GOLD_FIXING   = 3082  // ≈ $3350/oz × 0.92 EUR/USD
-const FB_SILVER_FIXING = 29.92 // ≈ $32.5/oz × 0.92 EUR/USD
-
-// ─── Grade definitions with exact pricing factors ────────────────────────────
+// Los precios y las leyes llegan ya calculados desde /api/prices, que es la
+// fuente de verdad y lo que el panel de administración modifica.
 //
-// Formula:  precio = (ley / 1000) × fixing_eur_oz × factor1 × factor2 / 31.1
-//
-// factor1 × factor2 encapsulan márgenes, eficiencia y descuentos propios
-// de cada quilataje según la política comercial de Te Quiero Metales.
+// Si esa llamada no está disponible (sin backend, caída de red, `npm run dev`
+// a secas), la tabla NO se queda vacía: se calcula en el navegador con los
+// valores de respaldo de abajo, exactamente como funcionaba la web antes.
 
-export const GOLD_GRADES = [
-  { label: 'Oro 24k',   key: 'au24',  fineness: 999.9, f1: 0.993,  f2: 0.99,  desc: '24 quilates · 999,9‰' },
-  { label: 'Oro 22k',   key: 'au22',  fineness: 916.7, f1: 0.9825, f2: 0.99,  desc: '22 quilates · 916,7‰' },
-  { label: 'Oro 21,6k', key: 'au216', fineness: 900,   f1: 0.9875, f2: 0.99,  desc: '21,6 quilates · 900‰'  },
-  { label: 'Oro 18k',   key: 'au18',  fineness: 750,   f1: 0.972,  f2: 0.98,  desc: '18 quilates · 750‰'   },
-  { label: 'Oro 14k',   key: 'au14',  fineness: 585,   f1: 0.97,   f2: 0.972, desc: '14 quilates · 585‰'   },
-  { label: 'Oro 10k',   key: 'au10',  fineness: 416.7, f1: 0.97,   f2: 0.978, desc: '10 quilates · 416,7‰' },
-  { label: 'Oro 9k',    key: 'au9',   fineness: 375,   f1: 0.97,   f2: 0.972, desc: '9 quilates · 375‰'    },
-]
+const TICK_MS = 4000
+const SPARK_POINTS = 20
 
-export const SILVER_GRADES = [
-  { label: 'Plata 1000', key: 'ag1000', fineness: 1000, f1: 0.78, f2: 0.97, desc: 'Plata pura · 1000‰'  },
-  { label: 'Plata 925',  key: 'ag925',  fineness: 925,  f1: 0.73, f2: 0.97, desc: 'Plata de ley · 925‰' },
-  { label: 'Plata 900',  key: 'ag900',  fineness: 900,  f1: 0.69, f2: 0.97, desc: '900 milésimas'        },
-  { label: 'Plata 835',  key: 'ag835',  fineness: 835,  f1: 0.62, f2: 0.97, desc: '835 milésimas'        },
-  { label: 'Plata 800',  key: 'ag800',  fineness: 800,  f1: 0.61, f2: 0.97, desc: '800 milésimas'        },
-]
+// El navegador vuelve a pedir /api/prices al ritmo que marque el panel, pero
+// acotado: ni tan seguido que sobre, ni tan espaciado que una pestaña abierta
+// se quede con precios de hace horas. Pedirlo no consume cuota de la API de
+// mercado: entre consultas responde la caché del servidor.
+const POLL_MIN_MS = 30_000
+const POLL_MAX_MS = 600_000
+const POLL_FALLBACK_MS = 60_000
 
-/**
- * Precio de compra del oro por gramo para un quilataje dado.
- * precio = (ley / 1000) × fixing_eur_oz × f1 × f2 / 31.1
- */
-export function goldGradePrice(fixingEurOz, grade) {
-  return (grade.fineness / 1000) * fixingEurOz * grade.f1 * grade.f2 / 31.1
+function pollInterval(refreshSeconds) {
+  const ms = Number(refreshSeconds) * 1000
+  if (!Number.isFinite(ms) || ms <= 0) return POLL_FALLBACK_MS
+  return Math.min(POLL_MAX_MS, Math.max(POLL_MIN_MS, ms))
 }
 
-/**
- * Precio de compra de la plata por gramo para una ley dada.
- * precio = (ley / 1000) × fixing_eur_oz / 31.1
- */
-export function silverGradePrice(fixingEurOz, grade) {
-  return (grade.fineness / 1000) * fixingEurOz * grade.f1 * grade.f2 / 31.1
+// ─── Respaldo ────────────────────────────────────────────────────────────────
+// Copia de los valores publicados. En cuanto /api/prices responde, estos datos
+// se descartan y mandan los del servidor.
+
+const FALLBACK_FIXING = { gold: 3082, silver: 29.92 }
+const FALLBACK_DIVISOR = 31.1
+
+const FALLBACK_GRADES = {
+  gold: [
+    { key: 'au24',  label: 'Oro 24k',   fineness: 999.9, f1: 0.993,  f2: 0.99,  f3: 0 },
+    { key: 'au22',  label: 'Oro 22k',   fineness: 916.7, f1: 0.9825, f2: 0.99,  f3: 0 },
+    { key: 'au216', label: 'Oro 21,6k', fineness: 900,   f1: 0.9875, f2: 0.99,  f3: 0 },
+    { key: 'au18',  label: 'Oro 18k',   fineness: 750,   f1: 0.972,  f2: 0.98,  f3: 0 },
+    { key: 'au14',  label: 'Oro 14k',   fineness: 585,   f1: 0.97,   f2: 0.972, f3: 0 },
+    { key: 'au10',  label: 'Oro 10k',   fineness: 416.7, f1: 0.97,   f2: 0.978, f3: 0 },
+    { key: 'au9',   label: 'Oro 9k',    fineness: 375,   f1: 0.97,   f2: 0.972, f3: 0 },
+  ],
+  silver: [
+    { key: 'ag1000', label: 'Plata 1000', fineness: 1000, f1: 0.78, f2: 0.97, f3: 0 },
+    { key: 'ag925',  label: 'Plata 925',  fineness: 925,  f1: 0.73, f2: 0.97, f3: 0 },
+    { key: 'ag900',  label: 'Plata 900',  fineness: 900,  f1: 0.69, f2: 0.97, f3: 0 },
+    { key: 'ag835',  label: 'Plata 835',  fineness: 835,  f1: 0.62, f2: 0.97, f3: 0 },
+    { key: 'ag800',  label: 'Plata 800',  fineness: 800,  f1: 0.61, f2: 0.97, f3: 0 },
+  ],
 }
 
-// ─── Hook ────────────────────────────────────────────────────────────────────
-function initSparkline(fixingEurOz) {
-  const base = goldGradePrice(fixingEurOz, GOLD_GRADES[0])
-  return Array.from({ length: 20 }, (_, i) =>
-    base - (19 - i) * 0.025 + (Math.random() - 0.5) * 0.09
-  )
+function buildFallback() {
+  const price = (g, fixing) =>
+    Math.max(0, (g.fineness / 1000) * fixing * g.f1 * g.f2 / FALLBACK_DIVISOR + (g.f3 || 0))
+  const rows = (metal) =>
+    FALLBACK_GRADES[metal].map(g => ({
+      key: g.key,
+      label: g.label,
+      fineness: g.fineness,
+      pricePerGram: price(g, FALLBACK_FIXING[metal]),
+    }))
+  return {
+    fixing: FALLBACK_FIXING,
+    change: { gold: 0, silver: 0 },
+    gold: rows('gold'),
+    silver: rows('silver'),
+    fallback: true,
+  }
+}
+
+// AbortSignal.timeout no existe en Safari 15 y anteriores; sin esta guarda la
+// petición reventaría y la tabla se quedaría vacía en esos navegadores.
+function timeoutSignal(ms) {
+  return typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
+    ? AbortSignal.timeout(ms)
+    : undefined
 }
 
 export function useMetalPrices() {
-  const [fixing, setFixing] = useState({ gold: FB_GOLD_FIXING, silver: FB_SILVER_FIXING })
-  const [meta, setMeta]     = useState({ dailyChangeGold: 0, dailyChangeSilver: 0, lastFetch: null, loading: true })
-  const [sparklineGold, setSparklineGold] = useState(() => initSparkline(FB_GOLD_FIXING))
+  // Se arranca con el respaldo, así la tabla nunca aparece vacía ni parpadea.
+  const [data, setData] = useState(buildFallback)
+  const [drift, setDrift] = useState({ gold: 1, silver: 1 })
+  const [meta, setMeta] = useState({ lastFetch: null, loading: false, error: null })
+  const [sparklineGold, setSparklineGold] = useState([])
 
-  const fetchFromAPI = useCallback(async () => {
+  const fetchPrices = useCallback(async () => {
     try {
-      const [gRes, sRes] = await Promise.all([
-        fetch(GOLD_URL,   { headers: HEADERS }),
-        fetch(SILVER_URL, { headers: HEADERS }),
-      ])
-      if (!gRes.ok) throw new Error(`Gold API ${gRes.status}`)
-      if (!sRes.ok) throw new Error(`Silver API ${sRes.status}`)
-
-      const gold   = await gRes.json()
-      const silver = await sRes.json()
-
-      // gold.price  → EUR per troy oz (raw fixing)
-      // silver.price → EUR per troy oz
-      const goldFix   = parseFloat(gold.price)
-      const silverFix = parseFloat(silver.price)
-      if (isNaN(goldFix) || isNaN(silverFix)) throw new Error('Unexpected API shape')
-
-      const next24k = goldGradePrice(goldFix, GOLD_GRADES[0])
-
-      setFixing({ gold: goldFix, silver: silverFix })
-      setSparklineGold(prev => [...prev.slice(1), next24k])
-      setMeta({
-        dailyChangeGold:   parseFloat(gold.chp)   || 0,
-        dailyChangeSilver: parseFloat(silver.chp) || 0,
-        lastFetch: new Date(),
-        loading: false,
+      const res = await fetch('/api/prices', {
+        headers: { Accept: 'application/json' },
+        signal: timeoutSignal(8000),
       })
+      if (!res.ok) throw new Error(`API ${res.status}`)
+      const payload = await res.json()
+      if (!payload?.fixing || typeof payload.fixing.gold !== 'number') {
+        throw new Error('Respuesta inesperada')
+      }
+
+      setData(payload)
+      setDrift({ gold: 1, silver: 1 }) // el dato real sustituye a la simulación
+      setMeta({ lastFetch: new Date(), loading: false, error: null })
     } catch (err) {
-      console.warn('[useMetalPrices] fetch failed →', err.message)
+      // Se mantiene lo último bueno (o el respaldo inicial): la tabla sigue
+      // mostrando precios en lugar de quedarse en blanco.
+      console.warn('[useMetalPrices] no se ha podido actualizar →', err.message)
       setMeta(prev => ({ ...prev, lastFetch: prev.lastFetch ?? new Date(), loading: false }))
     }
   }, [])
 
-  useEffect(() => {
-    fetchFromAPI()
-    const id = setInterval(fetchFromAPI, 60_000)
-    return () => clearInterval(id)
-  }, [fetchFromAPI])
+  // El intervalo se reajusta solo cuando el panel cambia la frecuencia: la
+  // primera respuesta ya trae el valor vigente.
+  const pollMs = pollInterval(data?.refreshSeconds)
 
-  // Tick simulation every 4 s (smooth live feel between API calls)
+  useEffect(() => { fetchPrices() }, [fetchPrices])
+
+  // El temporizador se rearma solo si cambia la cadencia, para no disparar una
+  // petición de más al recibir la primera respuesta.
   useEffect(() => {
+    const id = setInterval(fetchPrices, pollMs)
+    return () => clearInterval(id)
+  }, [fetchPrices, pollMs])
+
+  // Micro-oscilación entre llamadas para que la cotización se vea viva.
+  // Solo mueve un multiplicador; el precio base siempre es el del servidor.
+  useEffect(() => {
+    if (!data) return
     const jitter = () => 1 + (Math.random() - 0.496) * 0.0005
     const id = setInterval(() => {
-      setFixing(f => {
-        const next = { gold: f.gold * jitter(), silver: f.silver * jitter() }
-        setSparklineGold(sp => {
-          const next24k = goldGradePrice(next.gold, GOLD_GRADES[0])
-          return [...sp.slice(1), next24k]
-        })
-        return next
-      })
-    }, 4000)
+      setDrift(d => ({
+        gold: clampDrift(d.gold * jitter()),
+        silver: clampDrift(d.silver * jitter()),
+      }))
+    }, TICK_MS)
     return () => clearInterval(id)
-  }, [])
+  }, [data])
 
-  return {
-    fixing,
-    dailyChangeGold:   meta.dailyChangeGold,
-    dailyChangeSilver: meta.dailyChangeSilver,
-    lastFetch: meta.lastFetch,
-    loading:   meta.loading,
-    sparklineGold,
-  }
+  // El sparkline sigue al oro: se siembra con la primera respuesta y a partir
+  // de ahí avanza un punto en cada actualización o micro-oscilación.
+  useEffect(() => {
+    const base = data?.gold?.[0]?.pricePerGram
+    if (typeof base !== 'number') return
+    setSparklineGold(prev => {
+      if (prev.length < SPARK_POINTS) {
+        return Array.from({ length: SPARK_POINTS }, (_, i) =>
+          base * (1 + (i - SPARK_POINTS + 1) * 0.00015)
+        )
+      }
+      return [...prev.slice(1), base * drift.gold]
+    })
+  }, [data, drift.gold])
+
+  const value = useMemo(() => {
+    const scale = (grades, factor) =>
+      (grades || []).map(g => ({ ...g, pricePerGram: g.pricePerGram * factor }))
+
+    return {
+      fixing: { gold: data.fixing.gold * drift.gold, silver: data.fixing.silver * drift.silver },
+      change: data.change || { gold: 0, silver: 0 },
+      gold: scale(data.gold, drift.gold),
+      silver: scale(data.silver, drift.silver),
+      lastFetch: meta.lastFetch,
+      loading: meta.loading,
+      sparklineGold,
+    }
+  }, [data, drift, meta, sparklineGold])
+
+  return value
+}
+
+// Impide que la simulación se aleje del precio real más de un 0,5 %.
+function clampDrift(value) {
+  return Math.min(1.005, Math.max(0.995, value))
 }

@@ -1,0 +1,362 @@
+[
+  {
+    "archivo": "vite.config.js",
+    "sha256": "179c90eebc7cde331b83a87fdcbb685d8b510aa4a3e88f01da6f4b1066306e64"
+  },
+  {
+    "archivo": "vercel.json",
+    "sha256": "f33aac72080b25adee17363b7944e496fd57f10530fec062c0dfee914862da56"
+  },
+  {
+    "archivo": "src/shared/ui.css",
+    "sha256": "44fba7c21730c0b14d3245387c16bc9055ca5af3e61052ead0ca98b728bbd28d"
+  },
+  {
+    "archivo": "src/shared/lote.js",
+    "sha256": "aaffd9c01450a2c5a613cddf094278ca5ba0c5ae6d0d943efe2ee3fca8b12aad"
+  },
+  {
+    "archivo": "src/portal/PortalApp.jsx",
+    "sha256": "01860c210ac847c0da0a9eb80cd0a793727cf2b351046adddfe2310e99f0ec0f"
+  },
+  {
+    "archivo": "src/portal/portal.css",
+    "sha256": "fd9bd6011d1576ce53ad48a4d109982390ab7ee89ca6f4361cb42d9ac5b20679"
+  },
+  {
+    "archivo": "src/portal/main.jsx",
+    "sha256": "ed166127d17ed794763dca8fe3270eb45e7cce31bd81fb2360776d00acf96348"
+  },
+  {
+    "archivo": "src/portal/Cierre.jsx",
+    "sha256": "95db4286ceb68c4bc8d9775895d341973911c25daf9a3a79155f218cee4be6bc"
+  },
+  {
+    "archivo": "src/portal/api.js",
+    "sha256": "51b96c650478ae9c7f2644ceb10e1b6e84227a9ee6211908dadaf6ce4567be18"
+  },
+  {
+    "archivo": "src/main.jsx",
+    "sha256": "acb24feb3540b5ee687f5a65bdbb81fe3644aa19da89256bc24b18d8ee010410"
+  },
+  {
+    "archivo": "src/index.css",
+    "sha256": "a969c7de613fe74fe4f417e7633c482534b5fe548d6901ba3feb8780e122044b"
+  },
+  {
+    "archivo": "src/hooks/useMetalPrices.js",
+    "sha256": "67c84c8a18ad553fff40dee3c13ccd871f914636655fbe7fb767c105bdef41e3"
+  },
+  {
+    "archivo": "src/cookieConsent.js",
+    "sha256": "dd554f4ab2fc2da4eb2df69d1683edc9b5212294d98a2c9b1b35630b55b8c732"
+  },
+  {
+    "archivo": "src/contactInfo.js",
+    "sha256": "0375215a8a8ba9f2bc620c12ab5b848b43d64089df4d8556f38f637750794ec3"
+  },
+  {
+    "archivo": "PANEL.md",
+    "sha256": "cd51e4860bc954b8df697455eb47fef24e656c6adca2f7efe80b3216515fca03"
+  },
+  {
+    "archivo": "package.json",
+    "sha256": "fa57e7dc51895e89063d370cf93e3ff60b2a02b0faa2b248bfc7ca3dd15c81f4"
+  },
+  {
+    "archivo": "package-lock.json",
+    "sha256": "81918c2ea539ef521044401a16c8125f7a00a59c22a1e75ceb2303ef3b3981ba"
+  },
+  {
+    "archivo": "index.html",
+    "sha256": "20f0e28b9366a4799bcf02c644a6bff9c50870c5f31f33c76960d1c92e321636"
+  },
+  {
+    "archivo": "DESIGN.md",
+    "sha256": "9ace65186d60458611f980d03a6f2442e3c76ccb2a0a9be0bab911a2f4a0ed5e"
+  },
+  {
+    "archivo": "src/components/WhyUs.jsx",
+    "sha256": "7a6c0d114b4274f3feedcb9e4ec6058fa794971a9d434f65e760a872d975aebe"
+  },
+  {
+    "archivo": "src/components/TradingViewChart.jsx",
+    "sha256": "6ae39b878b816a584e81c1dec5f26c0b91cfe49c55463e90eea8a614415680fc"
+  },
+  {
+    "archivo": "src/components/TopBar.jsx",
+    "sha256": "fb42c5f4b1ffa43e6763d711e20f74e65a53730e50bde48fae1fed1f00d388fd"
+  },
+  {
+    "archivo": "src/components/Stats.jsx",
+    "sha256": "5b0f94bd21dcf75a3ca681600e1ef451edab249022379519f0226c0c5b292e6b"
+  },
+  {
+    "archivo": "src/components/Services.jsx",
+    "sha256": "3857023ad2dcc2c45fe2dc6a377a2f396e69a30649b7b6f4e583c0afc6bf3ef0"
+  },
+  {
+    "archivo": "src/components/PriceTable.jsx",
+    "sha256": "9ea463f54f7cfc69f39ee12792224d9bc1e7942afe1c9d78c4b7393a9e2a0ba6"
+  },
+  {
+    "archivo": "src/components/PriceCard.jsx",
+    "sha256": "08da4cb0d45e898a650564a04ea0d8a1cbf5b7d1c471288910468964e7f75350"
+  },
+  {
+    "archivo": "src/components/NavBar.jsx",
+    "sha256": "6280e0bca417ba7481e9f48f0c503b0e3fc8ada2fbd9f08093307604c52f2d61"
+  },
+  {
+    "archivo": "src/components/LegalPage.jsx",
+    "sha256": "f798d0767e80393e776c07e1b5b5b8f5d4f4352b10e8c6ae8cc0609b8cc90b70"
+  },
+  {
+    "archivo": "src/components/HowItWorks.jsx",
+    "sha256": "8dde6a4eb50a424b490d6c9e7f26d83f0b86ed4c0c2a225ec1a5918548974cdf"
+  },
+  {
+    "archivo": "src/components/Hero.jsx",
+    "sha256": "d6d7ec07f9f5f1f0226b0bf2ea8591f147fda4767661f721c39d566beab0a169"
+  },
+  {
+    "archivo": "src/components/Footer.jsx",
+    "sha256": "ab0f7d33a37f3cda24650ebc00c6772b65a8d8e1c17ca445b0685000062eb05b"
+  },
+  {
+    "archivo": "src/components/CookieBanner.jsx",
+    "sha256": "820a8621f57e8238cb99356e17c7bb75c46803511ef756cf0fdae3df2be6347b"
+  },
+  {
+    "archivo": "src/components/Contact.jsx",
+    "sha256": "6d8df595ce2c831f1a9a746e519d2244378f02832086eea50ac0d7d20bf8d966"
+  },
+  {
+    "archivo": "src/App.jsx",
+    "sha256": "385b7f1faf46f81ecd6e630c1dcdbcd8a0321711570e52b667feea757810b52d"
+  },
+  {
+    "archivo": "src/admin/views/Simulador.jsx",
+    "sha256": "fb90ef03a809658db0425d59e1c076c62702ef523494c7a4cb9d703fb0abcddb"
+  },
+  {
+    "archivo": "src/admin/views/Resumen.jsx",
+    "sha256": "64d4d8bcace475b0d22a436a6d42d425f3b4a66757ca6defdff062819599e7c9"
+  },
+  {
+    "archivo": "src/admin/views/Opciones.jsx",
+    "sha256": "69b4d776dabf87796d5706cd6443d56174c11f4f13e777bb2a13ee361b48d7e5"
+  },
+  {
+    "archivo": "src/admin/views/Historial.jsx",
+    "sha256": "601bf867e7677c29156ffed840ed1cabb58381ef4b80770f7aa63874682c803d"
+  },
+  {
+    "archivo": "src/admin/views/Formulas.jsx",
+    "sha256": "1ffd4d4fda250c7d0c3bacd4ddacacc7bdbdb6c1f64ffa1d1028f28c817844c7"
+  },
+  {
+    "archivo": "src/admin/views/Evolucion.jsx",
+    "sha256": "43ae2afd586c6ff95866d4b5172cdb9e386536402513ac18bc627bd724bacb8b"
+  },
+  {
+    "archivo": "src/admin/views/Escenarios.jsx",
+    "sha256": "f4b2d4134becf1cb447398a8beca128bb867120d05f0b935e99e6ea355a5e718"
+  },
+  {
+    "archivo": "src/admin/views/Clientes.jsx",
+    "sha256": "00fc44e154e783f5afddee5c1cfd1f42f5b76704f6c3dbdc7aa3406db4eda3a5"
+  },
+  {
+    "archivo": "src/admin/views/Cierres.jsx",
+    "sha256": "0df35a6e936c4bf17d4c82fb91920aa8bb8cb07f8495f947c95f3513fd82a3ea"
+  },
+  {
+    "archivo": "src/admin/main.jsx",
+    "sha256": "28ed992573a2f7acc934250bfc307ecdd50c5a82f8093fec82c45b384584c933"
+  },
+  {
+    "archivo": "src/admin/lib/prefs.js",
+    "sha256": "eb2e25d0f09be534dc3db6049685f87beb06c8fdcf12f23647c81baa401dae7c"
+  },
+  {
+    "archivo": "src/admin/lib/formulas.js",
+    "sha256": "740288321f67d28dab305c63c61d1249a2783bb151b0dc6629aa0deade476a32"
+  },
+  {
+    "archivo": "api/_lib/validate.js",
+    "sha256": "4c539dc168a7e4dd84d5e4af4b080c5ac386961d4f31b3e4202f4e43023e2b4f"
+  },
+  {
+    "archivo": "api/_lib/validate-cliente.js",
+    "sha256": "677e420f5c05ddebeffad3cea71290132a5079a1852db0b12e4a584a23b4bf7e"
+  },
+  {
+    "archivo": "api/_lib/store.js",
+    "sha256": "35a0fe11ca533aca1e39bcd5f7a8b41e3ec6bdbef86eec6b540fbb583f9c569b"
+  },
+  {
+    "archivo": "api/_lib/pdf.js",
+    "sha256": "12cd883cce52d9d1ed3dc130afa66f8ed6f2ae0144797e9d55c8490b72225fa6"
+  },
+  {
+    "archivo": "api/_lib/market.js",
+    "sha256": "00c7ff5e75466ed1197ce22a0d4da1a3fadd6804aff6b58ea48f0c0ba5198338"
+  },
+  {
+    "archivo": "api/_lib/justificante.js",
+    "sha256": "3326e455da16dc3d1b0a8881ff6a5da4dac605b391dbb2c0cc54018422b777ed"
+  },
+  {
+    "archivo": "api/_lib/http.js",
+    "sha256": "acadd2d96cd0d6b0d864f4dd5151709affd7419f6e7abbf0bac847fc7550bab4"
+  },
+  {
+    "archivo": "api/_lib/documentos.js",
+    "sha256": "23a0d2b4a2134a70cb56e833b6c23ec1ababafcf172f43a9d34d80fc58507f9f"
+  },
+  {
+    "archivo": "api/_lib/defaults.js",
+    "sha256": "0b803f5b43812a33b6e3804e753f8287a8f6a50dcd4ce572c43a86c423eb57a1"
+  },
+  {
+    "archivo": "api/_lib/crypto.js",
+    "sha256": "49adbe402ea0cdfb808827d9bbe7f18819b14bb879b61adbe705cedae5a8beb8"
+  },
+  {
+    "archivo": "api/_lib/correo.js",
+    "sha256": "a402c9bc439b49c9ff83464c64b0baf347a38a798c6df2b622f8e9e8b1506bf0"
+  },
+  {
+    "archivo": "api/_lib/clientes.js",
+    "sha256": "83da58f1683247bc1d0d530c813711c5058a573293fe880b251486ccf5ede9fe"
+  },
+  {
+    "archivo": "api/_lib/cierres.js",
+    "sha256": "b0676879837d8c8c7cb5e2cc70e3af3a31c0d9ad4c6da04828fa36062271990c"
+  },
+  {
+    "archivo": "api/_lib/auth.js",
+    "sha256": "ead909f5ef976ddb8e7b20fe790cfd1a707a5382ccf1d6454af1d6a792f7e57a"
+  },
+  {
+    "archivo": "api/prices.js",
+    "sha256": "0db8a181bfdebcd9ea11a3ff0476aca2569e05bb8ab30fd1d76e49056ae3e686"
+  },
+  {
+    "archivo": "src/admin/components/Diff.jsx",
+    "sha256": "698a76a3fac7e0575b941d31bc2089c63334379d3ef727b5dc8fb9936ef689b4"
+  },
+  {
+    "archivo": "src/admin/components/Chart.jsx",
+    "sha256": "1a23a23cd4ec47d96e4200153b9f5d7600f170150fb944471efa62d0eb910f97"
+  },
+  {
+    "archivo": "src/admin/api.js",
+    "sha256": "44d8a3661abb009e0721698e5a88528b29c8f86ca49a910275705e3032785d12"
+  },
+  {
+    "archivo": "src/admin/AdminApp.jsx",
+    "sha256": "3d7b88a546ace2e87f7384a1e492246055f38e434eb63b71c0ec4b446e92dd4b"
+  },
+  {
+    "archivo": "src/admin/admin.css",
+    "sha256": "6d5dddf442e2a24fd297a4eba1785fd397df855dadf55414967bf42cf846988a"
+  },
+  {
+    "archivo": "api/portal/documentos.js",
+    "sha256": "c5c342ea0222c854cb40650f65e23cb7ba663a5f38ea0e27b77f2bb57dac9d35"
+  },
+  {
+    "archivo": "api/portal/cuenta.js",
+    "sha256": "897826745e49b2f8bcd66ffb14cf9edf0ecf009e562923735680d71effe75d3f"
+  },
+  {
+    "archivo": "api/cierres.js",
+    "sha256": "31946b3f6c7acc01268e29421ab5fb02c2414469b255807136d625c733c89fae"
+  },
+  {
+    "archivo": "api/admin/session.js",
+    "sha256": "47cea199d4c85e995c1dc354ed02116236e812dd2d3aae5e7070781a89de502a"
+  },
+  {
+    "archivo": "scripts/pruebas/unidad.mjs",
+    "sha256": "a1d48dcbec2030c1fb8945439d15d1404706b6dc87ca21c66a2eadcabeb30c22"
+  },
+  {
+    "archivo": "api/admin/series.js",
+    "sha256": "f4e8a5f494c78398e005d8660fca40d72c3c5bf7e971b985d25287b9719f6045"
+  },
+  {
+    "archivo": "scripts/pruebas/memoria.mjs",
+    "sha256": "a0f3dbec222fec9b1e6b2762019d7b27abfdebf98bce63882f87735921e58d37"
+  },
+  {
+    "archivo": "api/admin/scenarios.js",
+    "sha256": "1fa060c7b9d6ffee76e08136f48afbcb3e0ced36bc247ce432b64c22600b91eb"
+  },
+  {
+    "archivo": "scripts/pruebas/endpoints.mjs",
+    "sha256": "e7e68dfb68525a112c60ef81c29d77e87f922c41c3bbe2655187f36d635d8f51"
+  },
+  {
+    "archivo": "api/admin/logout.js",
+    "sha256": "0afee6330f3bf8c5bd602f9f3f88edc40e50b3c6845f324d5114aed45a5fb3ca"
+  },
+  {
+    "archivo": "scripts/pruebas/clave.mjs",
+    "sha256": "a14444dce1da7d39af994e5d2314bf4969be7cdd0570054b60fdc1df6afef7f5"
+  },
+  {
+    "archivo": "api/admin/login.js",
+    "sha256": "690c186b7ade9dbf52f32f3e2a289b9edd2750d4dcca01662e298cea579386e8"
+  },
+  {
+    "archivo": "scripts/pruebas/cierres.mjs",
+    "sha256": "f5cbb0332209a2ec796076ab5166f3caee32a05300e57d7a1d1782d0e8d5ffa1"
+  },
+  {
+    "archivo": "api/admin/history.js",
+    "sha256": "0c4e7e536a6eb5bf2de468fcdbeab3e4927be8ee534146cc6a184796636e0dbd"
+  },
+  {
+    "archivo": "scripts/crear-credenciales.mjs",
+    "sha256": "542c794ab2be276087f660985d75679f2c8c11711247e1b3e9250e1aa2b8a18a"
+  },
+  {
+    "archivo": "api/admin/formulas.js",
+    "sha256": "436e2741c5ea1555ec2ec8cd759b04542c413a5f97d9ae6a921653c6af69980f"
+  },
+  {
+    "archivo": "scripts/cliente-demo.mjs",
+    "sha256": "e3f78b49f9f42d8d0b70b7ee21822a37b68d65082d6fc6ea4809898b1c18f345"
+  },
+  {
+    "archivo": "api/admin/clientes.js",
+    "sha256": "462d01a993dd6851f9c2b5e22b7d96f07f09b751f97ac58b5f192e4eaf7460f7"
+  },
+  {
+    "archivo": "admin/index.html",
+    "sha256": "018e687135394f41b82d650288e94630e487ffb2fc92d6421387e74483b69f80"
+  },
+  {
+    "archivo": "PORTAL.md",
+    "sha256": "44f85a2025d9a4ee409a9f628091d474e27954eaecfbd8355fc540b3d65284df"
+  },
+  {
+    "archivo": "public/sitemap.xml",
+    "sha256": "2cf3f85ef54ba2c8a7f11204d13b4d92418dbf82691cbd1eb229d93971c3f067"
+  },
+  {
+    "archivo": "public/robots.txt",
+    "sha256": "3e7d7d0aaf1a114dca397bf008f63aab4ee5ecce8ee6150c2a84f0509fd893e9"
+  },
+  {
+    "archivo": "portal/index.html",
+    "sha256": "bbe645854c51d662a99d6a7f2af02f9e9fccf03ad88b6303711063e0f6e3469d"
+  },
+  {
+    "archivo": "PRODUCT.md",
+    "sha256": "aca7beae97aa0ce36f5212e12c04ea345258a3526e60e3f3ef7c59a41f41b02e"
+  }
+]

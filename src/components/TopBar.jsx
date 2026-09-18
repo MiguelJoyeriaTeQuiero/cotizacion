@@ -1,3 +1,6 @@
+import { Fragment } from 'react'
+import { EMAIL_GENERAL, PHONES } from '../contactInfo'
+
 export default function TopBar() {
   return (
     <div className="topbar">
@@ -7,12 +10,15 @@ export default function TopBar() {
         <span>Cotización cada minuto</span>
       </div>
       <div className="topbar-contacts">
-        <a href="tel:922263470">📞 922 263 470</a>
-        <span className="topbar-sep">|</span>
-        <a href="tel:822178368">822 178 368</a>
+        {PHONES.map((p, i) => (
+          <Fragment key={p.tel}>
+            {i > 0 && <span className="topbar-sep">|</span>}
+            <a href={`tel:${p.tel}`}>{i === 0 ? `📞 ${p.label}` : p.label}</a>
+          </Fragment>
+        ))}
         <span className="topbar-sep topbar-sep-email">|</span>
-        <a href="mailto:info@tequierometales.com" className="topbar-email">
-          info@tequierometales.com
+        <a href={`mailto:${EMAIL_GENERAL}`} className="topbar-email">
+          {EMAIL_GENERAL}
         </a>
       </div>
     </div>

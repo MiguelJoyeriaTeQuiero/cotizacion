@@ -967,7 +967,10 @@ button {
 .svc-secondary-grid {
   display: grid; grid-template-columns: 1fr; gap: 16px;
 }
-@media (min-width: 640px) { .svc-secondary-grid { grid-template-columns: 1fr 1fr; } }
+/* auto-fit: con una sola tarjeta ocupa todo el ancho; con dos, se reparten. */
+@media (min-width: 640px) {
+  .svc-secondary-grid { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+}
 
 .svc-card {
   border: 1px solid var(--border); border-radius: 14px;
@@ -998,6 +1001,11 @@ button {
   font-size: 13px; font-weight: 600; color: var(--teal);
   border-bottom: 1px solid currentColor; padding-bottom: 2px;
   width: fit-content; transition: color 0.2s, gap 0.2s;
+}
+/* El enlace de herramientas es un botón: abre el formulario, no navega. */
+button.svc-link {
+  background: none; border: none; border-bottom: 1px solid currentColor;
+  font-family: inherit; cursor: pointer;
 }
 .svc-link:hover { color: var(--teal-mid); gap: 10px; }
 
@@ -1799,6 +1807,13 @@ button {
   margin-bottom: 9px;
   font-size: 13.5px;
   color: rgba(255, 255, 255, 0.52);
+}
+.footer-contact-row a {
+  color: inherit;
+  transition: color 0.2s;
+}
+.footer-contact-row a:hover {
+  color: var(--gold-light);
 }
 .footer-contact-icon {
   color: var(--gold);

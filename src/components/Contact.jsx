@@ -1,4 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import {
+  ADDRESS,
+  EMAILS,
+  EMAIL_GENERAL,
+  OPEN_CONTACT_FORM_EVENT,
+  PHONES,
+} from '../contactInfo'
 
 const IconPin = () => (
   <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
@@ -24,6 +31,21 @@ const IconClock = () => (
 
 export default function Contact() {
   const [sent, setSent] = useState(false)
+  const [destino, setDestino] = useState(EMAIL_GENERAL)
+  const primerCampo = useRef(null)
+
+  // Otra sección puede abrir el formulario apuntando a un correo concreto
+  // (por ejemplo, la tarjeta de herramientas).
+  useEffect(() => {
+    const handler = e => {
+      setDestino(e.detail?.destino || EMAIL_GENERAL)
+      setSent(false)
+      // En el fotograma siguiente, cuando el formulario ya está pintado.
+      requestAnimationFrame(() => primerCampo.current?.focus({ preventScroll: true }))
+    }
+    window.addEventListener(OPEN_CONTACT_FORM_EVENT, handler)
+    return () => window.removeEventListener(OPEN_CONTACT_FORM_EVENT, handler)
+  }, [])
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -45,8 +67,8 @@ export default function Contact() {
             <div>
               <div className="contact-info-label">Dirección</div>
               <div className="contact-info-value">
-                Camino San Miguel de Geneto 66, Local C<br />
-                38296 · Santa Cruz de Tenerife
+                {ADDRESS.street}<br />
+                {ADDRESS.city}
               </div>
             </div>
           </div>
@@ -56,8 +78,12 @@ export default function Contact() {
             <div>
               <div className="contact-info-label">Teléfono</div>
               <div className="contact-info-value">
-                <a href="tel:922263470">922 263 470</a><br />
-                <a href="tel:822178368">822 178 368</a>
+                {PHONES.map((p, i) => (
+                  <span key={p.tel}>
+                    {i > 0 && <br />}
+                    <a href={`tel:${p.tel}`}>{p.label}</a>
+                  </span>
+                ))}
               </div>
             </div>
           </div>
@@ -67,8 +93,12 @@ export default function Contact() {
             <div>
               <div className="contact-info-label">Email</div>
               <div className="contact-info-value">
-                <a href="mailto:info@tequierometales.com">info@tequierometales.com</a><br />
-                <a href="mailto:herramientas@tequierometales.com">herramientas@tequierometales.com</a>
+                {EMAILS.map((email, i) => (
+                  <span key={email}>
+                    {i > 0 && <br />}
+                    <a href={`mailto:${email}`}>{email}</a>
+                  </span>
+                ))}
               </div>
             </div>
           </div>
@@ -91,7 +121,9 @@ export default function Contact() {
         {/* Form */}
         <div className="fade-up d1">
           <h3 className="form-title">Envíanos un mensaje</h3>
-          <p className="form-sub">Te responderemos en menos de 24 horas.</p>
+          <p className="form-sub">
+            Tu mensaje va dirigido a <a href={`mailto:${destino}`}>{destino}</a>.
+          </p>
 
           {sent ? (
             <div style={{
@@ -108,10 +140,11 @@ export default function Contact() {
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
+              <input type="hidden" name="destino" value={destino} />
               <div className="form-row">
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Nombre *</label>
-                  <input type="text" className="form-input" placeholder="Tu nombre" required />
+                  <input ref={primerCampo} type="text" className="form-input" placeholder="Tu nombre" required />
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Empresa</label>
@@ -127,17 +160,6 @@ export default function Contact() {
                   <label className="form-label">Email *</label>
                   <input type="email" className="form-input" placeholder="tu@empresa.com" required />
                 </div>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Tipo de metal</label>
-                <select className="form-select">
-                  <option value="">Selecciona...</option>
-                  <option>Oro (varios quilates)</option>
-                  <option>Plata</option>
-                  <option>Oro y Plata</option>
-                  <option>Platino</option>
-                  <option>Otro</option>
-                </select>
               </div>
               <div className="form-group">
                 <label className="form-label">Mensaje</label>

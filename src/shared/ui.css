@@ -1,0 +1,855 @@
+/* Cimientos del panel de TQM y del portal de clientes.
+ *
+ * Autocontenido y sin recursos externos, para poder servirlo con una CSP
+ * estricta: la tipografía se sirve desde /fonts del propio dominio, que es lo
+ * único que permite `font-src 'self'`.
+ *
+ * La idea, en una frase: un taller de precisión. Papel cálido, tinta fría,
+ * reglas de una décima en vez de tarjetas apiladas, y las cifras alineadas como
+ * en una báscula. El color no decora: turquesa es acción, oro es «a medias»,
+ * verde y rojo son mercado. Lo que no dice nada, no lleva color.
+ *
+ * El registro está en DESIGN.md. Si cambias un token aquí, cámbialo allí.
+ */
+
+/* ─── Tipografía ─────────────────────────────────────────────────────────────
+   IBM Plex Sans para toda la interfaz e IBM Plex Mono para las marcas técnicas
+   (referencias, versiones, CIF). Las dos con licencia OFL y servidas desde el
+   propio dominio. La sans es variable: un solo archivo por subconjunto cubre
+   del 100 al 700, así que pesa menos que los tres estáticos que sustituye. */
+
+@font-face {
+  font-family: 'Plex Sans';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url('/fonts/plex-var-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Plex Sans';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url('/fonts/plex-var-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/plexmono-400-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC, U+2122;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  color-scheme: light;
+
+  /* ── Papel. Cálido, tirando a ámbar: es lo que impide que la pantalla
+        parezca gris de sistema. */
+  --paper: oklch(0.958 0.008 85);
+  --surface: oklch(0.998 0.002 85);
+  --sunken: oklch(0.941 0.009 85);
+  /* Neutro más frío para el cromo —raíl lateral, barras—: separa la herramienta
+     del contenido sin necesidad de una línea más. */
+  --rail: oklch(0.947 0.005 240);
+
+  /* ── Tinta. Fría, para que contraste con el papel. */
+  --ink: oklch(0.24 0.015 240);
+  --ink-2: oklch(0.44 0.012 240);
+  --ink-3: oklch(0.53 0.010 240);
+  --ink-4: oklch(0.66 0.008 240);
+
+  /* ── Reglas. */
+  --line: oklch(0.895 0.006 240);
+  --line-soft: oklch(0.935 0.005 240);
+  --line-strong: oklch(0.79 0.010 240);
+
+  /* ── Acento: acción, selección, foco. Nunca superficie grande. */
+  --accent: oklch(0.46 0.077 213);
+  --accent-deep: oklch(0.34 0.062 213);
+  --accent-tint: oklch(0.958 0.021 213);
+  --accent-line: oklch(0.86 0.042 213);
+  --on-accent: oklch(0.99 0.003 85);
+
+  /* Superficie de marca: turquesa a fondo. La usa el portal, que es la cara de
+     cliente; el panel sigue siendo papel. */
+  --band: oklch(0.31 0.055 213);
+  --band-2: oklch(0.26 0.050 215);
+  --on-band: oklch(0.965 0.008 85);
+  --on-band-soft: oklch(0.82 0.022 213);
+  --band-line: oklch(0.40 0.048 213);
+
+  /* Ámbar: el complementario del turquesa (213° ↔ 55°). Es el que enciende las
+     cifras sobre la banda y marca lo que hay que mirar. El oro sigue siendo
+     estado; esto es acento. */
+  --amber: oklch(0.78 0.135 62);
+  --amber-ink: oklch(0.52 0.115 55);
+  --amber-tint: oklch(0.955 0.045 65);
+  --amber-line: oklch(0.86 0.075 62);
+
+  /* ── Oro: lo que está a medias. Reserva corriendo, cambios sin publicar,
+        expediente por revisar. La mercancía como significado, no como adorno. */
+  --gold: oklch(0.73 0.10 78);
+  --gold-ink: oklch(0.47 0.085 70);
+  --gold-tint: oklch(0.965 0.030 80);
+  --gold-line: oklch(0.87 0.055 80);
+
+  /* ── Mercado. Siempre con signo o palabra al lado, nunca el color solo. */
+  --up: oklch(0.50 0.13 150);
+  --up-tint: oklch(0.958 0.035 150);
+  --up-line: oklch(0.86 0.06 150);
+  --down: oklch(0.52 0.17 27);
+  --down-tint: oklch(0.963 0.026 27);
+  --down-line: oklch(0.86 0.06 27);
+
+  /* ── Escala tipográfica. Fija, en rem: esto es una herramienta, no una
+        portada, y un titular que encoge dentro de un panel se ve peor. */
+  --t-11: 0.6875rem;
+  --t-12: 0.75rem;
+  --t-13: 0.8125rem;
+  --t-14: 0.875rem;
+  --t-15: 0.9375rem;
+  --t-17: 1.0625rem;
+  --t-20: 1.25rem;
+  --t-24: 1.5rem;
+  --t-30: 1.875rem;
+  --t-38: 2.375rem;
+
+  --font-ui: 'Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Plex Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Mono', monospace;
+
+  /* ── Espaciado. Base de 4, con saltos: el mismo relleno en todo es monotonía. */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px; --s5: 20px;
+  --s6: 24px; --s7: 32px; --s8: 40px; --s9: 56px; --s10: 72px;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-xs: 4px;
+
+  --ring: 0 0 0 3px oklch(0.46 0.077 213 / 0.22);
+  --shadow-sm: 0 1px 2px oklch(0.30 0.03 240 / 0.06), 0 1px 1px oklch(0.30 0.03 240 / 0.04);
+  --shadow-md: 0 1px 2px oklch(0.30 0.03 240 / 0.05), 0 6px 16px -6px oklch(0.30 0.03 240 / 0.16);
+  --shadow-lg: 0 2px 4px oklch(0.30 0.03 240 / 0.05), 0 18px 40px -16px oklch(0.30 0.03 240 / 0.28);
+
+  /* ── Movimiento. Una sola curva de salida, y corta: el usuario está en una
+        tarea, no viendo una coreografía. */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --fast: 140ms;
+  --base: 200ms;
+
+  --topbar-h: 62px;
+  --side-w: 220px;
+  --bar-h: 62px;
+
+  /* Papel milimetrado: la retícula del banco de trabajo, al 3% para que se
+     intuya y no se lea. */
+  --grid-paper:
+    repeating-linear-gradient(0deg, oklch(0.42 0.03 240 / 0.028) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, oklch(0.42 0.03 240 / 0.028) 0 1px, transparent 1px 24px);
+
+  /* ── Nombres antiguos. El resto de hojas todavía los usa; aquí apuntan ya a
+        la paleta nueva, así que se pueden ir retirando sin prisa. */
+  --ink-soft: var(--ink-2);
+  --ink-faint: var(--ink-3);
+  --teal: var(--accent);
+  --teal-deep: var(--accent-deep);
+  --teal-tint: var(--accent-tint);
+  --font: var(--font-ui);
+}
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font-ui);
+  font-size: var(--t-15);
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'kern' 1;
+}
+
+input,
+button,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+::selection { background: var(--accent-tint); color: var(--accent-deep); }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+h1, h2, h3, h4 {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+b, strong { font-weight: 600; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ─── Cifras ─────────────────────────────────────────────────────────────────
+   El sujeto de estas dos aplicaciones. Tabulares siempre, para que las columnas
+   se puedan comparar de un vistazo sin llegar a leerlas, y con el interletraje
+   un pelo cerrado, que es lo que hace que un número parezca medido. */
+
+.num,
+.mini td,
+.mini th {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.01em;
+}
+
+/* Marca técnica: referencias, versiones, identificadores. Monoespaciada y un
+   punto más pequeña, porque no es prosa ni es dinero: es una matrícula. */
+.ref {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  letter-spacing: -0.02em;
+}
+
+/* La etiqueta en versalitas es la firma del sistema: encabeza cada panel, cada
+   columna y cada dato. */
+.eyebrow,
+.panel__title,
+.mini th {
+  font-size: var(--t-11);
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.muted { color: var(--ink-3); }
+.right { text-align: right; }
+.up { color: var(--up); }
+.down { color: var(--down); }
+.warn { color: var(--gold-ink); }
+.bad { color: var(--down); }
+
+.icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ─── Botones ────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: var(--t-14);
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease),
+    color var(--fast) var(--ease), box-shadow var(--fast) var(--ease), transform var(--fast) var(--ease);
+}
+.btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-deep); }
+.btn:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  /* Un filo de luz arriba: es lo que separa un botón macizo de un rectángulo
+     de color. */
+  box-shadow: var(--shadow-sm), inset 0 1px 0 oklch(1 0 0 / 0.14);
+}
+.btn.primary:hover:not(:disabled) {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-md), inset 0 1px 0 oklch(1 0 0 / 0.14);
+}
+
+/* Armado: hay algo sin publicar esperando a este botón. */
+.btn.primary.armed:not(:disabled) {
+  box-shadow: var(--shadow-md), inset 0 1px 0 oklch(1 0 0 / 0.14), 0 0 0 3px oklch(0.73 0.10 78 / 0.30);
+}
+
+.btn.ghost {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--ink-2);
+}
+.btn.ghost:hover:not(:disabled) { background: var(--sunken); color: var(--accent-deep); border-color: transparent; }
+
+.btn.block { width: 100%; }
+.btn.small { height: 28px; padding: 0 11px; font-size: var(--t-13); }
+.btn.danger,
+.btn.small.danger { color: var(--down); }
+.btn.danger:hover:not(:disabled),
+.btn.small.danger:hover:not(:disabled) { border-color: var(--down); background: var(--down-tint); color: var(--down); }
+
+.btn.icon {
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  font-size: var(--t-17);
+  line-height: 1;
+  flex: 0 0 auto;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-3);
+}
+.btn.icon:hover:not(:disabled) { background: var(--sunken); color: var(--ink); border-color: transparent; }
+.btn.icon.danger:hover:not(:disabled) { background: var(--down-tint); color: var(--down); }
+
+.btn.add {
+  width: 100%;
+  height: auto;
+  padding: 12px;
+  background: transparent;
+  border: 1px dashed var(--line-strong);
+  color: var(--ink-3);
+  box-shadow: none;
+}
+.btn.add:hover:not(:disabled) {
+  border-style: solid;
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent-deep);
+}
+
+.linky {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--accent-line);
+  transition: color var(--fast) var(--ease), text-decoration-color var(--fast) var(--ease);
+}
+.linky:hover { color: var(--accent-deep); text-decoration-color: currentColor; }
+.linky.warn { color: var(--gold-ink); text-decoration: none; }
+
+.kbd {
+  font-family: var(--font-mono);
+  font-size: var(--t-11);
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: var(--radius-xs);
+  background: oklch(1 0 0 / 0.16);
+  border: 1px solid oklch(1 0 0 / 0.22);
+  font-weight: 400;
+}
+
+.chip {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 0 12px;
+  font-size: var(--t-13);
+  cursor: pointer;
+  color: var(--ink-2);
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+.chip:hover { border-color: var(--accent-line); color: var(--accent-deep); background: var(--accent-tint); }
+.chip.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 500;
+}
+
+/* ─── Campos ─────────────────────────────────────────────────────────────── */
+
+.input,
+textarea.input,
+.select {
+  width: 100%;
+  height: 34px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  background: var(--surface);
+  color: var(--ink);
+  transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+}
+.input:hover:not(:focus),
+.select:hover:not(:focus) { border-color: var(--ink-4); }
+.input:focus,
+.select:focus { outline: none; border-color: var(--accent); box-shadow: var(--ring); }
+.input::placeholder { color: var(--ink-4); }
+.input[aria-invalid='true'] { border-color: var(--down); }
+.input:disabled { background: var(--sunken); color: var(--ink-3); cursor: not-allowed; }
+
+textarea.input {
+  height: auto;
+  padding: 8px 10px;
+  resize: vertical;
+  min-height: 74px;
+  line-height: 1.5;
+}
+
+.select {
+  cursor: pointer;
+  padding-right: 30px;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%),
+    linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
+  background-position: right 13px center, right 8px center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.label {
+  display: block;
+  font-size: var(--t-12);
+  font-weight: 500;
+  color: var(--ink-2);
+  margin-bottom: 6px;
+}
+
+.field { margin-bottom: var(--s4); }
+
+.field-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--t-13);
+  color: var(--ink-2);
+}
+.field-inline .select { width: auto; min-width: 150px; }
+
+.inline-form { display: flex; gap: 10px; flex-wrap: wrap; }
+.inline-form .input { flex: 1 1 220px; }
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--t-12);
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+/* ─── Acceso ─────────────────────────────────────────────────────────────── */
+
+.login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--s6);
+  background: var(--grid-paper), var(--paper);
+}
+.login__card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 36px 34px 30px;
+  box-shadow: var(--shadow-md);
+  animation: rise 420ms var(--ease) both;
+}
+.login__mark { display: flex; align-items: center; gap: 10px; margin-bottom: var(--s6); }
+.login__rule { flex: 1; height: 1px; background: linear-gradient(90deg, var(--gold), transparent); }
+.login__wordmark {
+  font-size: var(--t-11);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--gold-ink);
+}
+.login__card h1 { font-size: var(--t-24); }
+.login__sub { color: var(--ink-3); font-size: var(--t-13); margin: var(--s2) 0 var(--s6); }
+.login__actions { margin-top: 22px; }
+.login__foot {
+  margin-top: 22px;
+  padding-top: var(--s4);
+  border-top: 1px solid var(--line-soft);
+  font-size: var(--t-12);
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+.login__foot .dot { display: inline-block; margin-right: 7px; vertical-align: middle; }
+.login__foot b { color: var(--ink); }
+
+.splash {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--s5);
+  padding: var(--s6);
+  text-align: center;
+  color: var(--ink-2);
+}
+.splash__mark {
+  font-size: var(--t-11);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--gold-ink);
+}
+
+/* ─── Estado ─────────────────────────────────────────────────────────────── */
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--up);
+  box-shadow: 0 0 0 3px oklch(0.50 0.13 150 / 0.16);
+}
+.dot.stale { background: var(--gold); box-shadow: 0 0 0 3px oklch(0.73 0.10 78 / 0.2); }
+.dot.live { animation: breathe 3s var(--ease) infinite; }
+
+/* ─── Paneles ────────────────────────────────────────────────────────────── */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--s5);
+  box-shadow: var(--shadow-sm);
+}
+.panel__title { margin-bottom: var(--s4); }
+/* Cuando el título de un panel es una referencia, deja de ser una etiqueta y
+   pasa a ser la matrícula de la ficha: mono, legible y en tinta plena. */
+.panel__title.ref {
+  font-size: var(--t-14);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--ink);
+}
+
+/* Cabecera con acciones a la derecha. La regla que la separa es lo que hace que
+   un panel parezca una sección de un libro y no una tarjeta más. */
+.panel__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  margin-bottom: var(--s4);
+}
+.panel__head .panel__title { margin-bottom: 0; }
+
+.note {
+  font-size: var(--t-13);
+  line-height: 1.65;
+  color: var(--ink-2);
+  margin-top: var(--s3);
+  max-width: 70ch;
+}
+.note.tight { margin-top: var(--s1); }
+.note strong { color: var(--ink); }
+.note code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--gold-tint);
+  color: var(--gold-ink);
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+}
+
+.stats { display: flex; flex-direction: column; }
+.stats.inline { flex-direction: row; flex-wrap: wrap; gap: var(--s3) var(--s8); margin-top: var(--s5); }
+.stat {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: 7px 0;
+  font-size: var(--t-13);
+  border-bottom: 1px solid var(--line-soft);
+}
+.stats.inline .stat { flex-direction: column; align-items: flex-start; gap: 0; border: 0; padding: 0; }
+.stat:last-child { border-bottom: 0; padding-bottom: 0; }
+.stat dt { color: var(--ink-3); white-space: nowrap; }
+.stat dd { text-align: right; font-weight: 600; min-width: 0; font-variant-numeric: tabular-nums; }
+.stats.inline .stat dd { text-align: left; font-size: var(--t-17); }
+.stat dd small { display: block; font-weight: 400; font-size: var(--t-11); color: var(--ink-3); }
+
+.pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-12);
+  color: var(--gold-ink);
+  background: var(--gold-tint);
+  border: 1px solid var(--gold-line);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.tag {
+  display: inline-block;
+  font-size: var(--t-11);
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-style: normal;
+  color: var(--gold-ink);
+  background: var(--gold-tint);
+  border: 1px solid var(--gold-line);
+  border-radius: var(--radius-xs);
+  padding: 1px 6px;
+  margin-left: var(--s2);
+}
+
+/* El vacío enseña qué es esta pantalla, no dice «no hay datos». */
+.empty-block { padding: var(--s8) var(--s5); text-align: center; color: var(--ink-3); }
+.empty-block h4 { font-size: var(--t-15); color: var(--ink); margin-bottom: 6px; }
+.empty-block p { font-size: var(--t-13); max-width: 58ch; margin: 0 auto; line-height: 1.65; }
+
+.table-scroll { overflow-x: auto; }
+
+/* ─── Tablas ─────────────────────────────────────────────────────────────── */
+
+.mini { width: 100%; border-collapse: collapse; font-size: var(--t-13); }
+.mini.wide { min-width: 660px; }
+.mini th {
+  text-align: left;
+  padding: 0 10px 8px 0;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.mini th.right { text-align: right; }
+/* Una columna de cifras alineada a la derecha se pega a la siguiente y las dos
+   se leen como una sola. El aire va después del número. */
+.mini .right + th,
+.mini .right + td { padding-left: var(--s5); }
+.mini td { padding: 10px 10px 10px 0; border-bottom: 1px solid var(--line-soft); }
+.mini tr:last-child td { border-bottom: 0; }
+.mini tbody tr { transition: background var(--fast) var(--ease); }
+/* El hover es neutro a propósito: el tinte de acento significa
+   «seleccionada», y dos cosas no pueden significar lo mismo. */
+.mini tbody tr:hover { background: var(--sunken); }
+.mini tr.is-bad td { background: var(--down-tint); }
+.mini td em { font-style: normal; }
+.mini .bead { margin-right: var(--s2); }
+.mini td small {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--t-11);
+  font-weight: 400;
+  color: var(--ink-3);
+}
+.mini td small.warn { color: var(--gold-ink); }
+
+/* ─── Avisos ────────────────────────────────────────────────────────────── */
+
+.alert {
+  border-radius: var(--radius-sm);
+  padding: 11px 13px;
+  font-size: var(--t-13);
+  line-height: 1.55;
+  border: 1px solid;
+  margin-top: var(--s3);
+}
+.alert.error { background: var(--down-tint); border-color: var(--down-line); color: oklch(0.42 0.15 27); }
+/* Atención, no error: algo que mirar antes de seguir, no algo que ha fallado. */
+.alert.warn { background: var(--gold-tint); border-color: var(--gold-line); color: var(--gold-ink); }
+.alert ul { margin: 7px 0 0 18px; }
+
+/* ─── Carga ─────────────────────────────────────────────────────────────── */
+
+.skeleton {
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--sunken) 25%, oklch(0.985 0.004 85) 37%, var(--sunken) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+.skeleton-row {
+  display: grid;
+  grid-template-columns: var(--cols);
+  gap: var(--s3);
+  align-items: center;
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--line-soft);
+}
+.skeleton-row > * { height: 30px; }
+.skeleton-row > *:first-child { height: 14px; }
+
+/* ─── Documentos y fichas ────────────────────────────────────────────────── */
+
+.docs { list-style: none; display: flex; flex-direction: column; margin-top: var(--s3); }
+.doc {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: var(--t-13);
+}
+.doc:last-child { border-bottom: 0; }
+.doc__tipo {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-xs);
+  background: var(--accent-tint);
+  border: 1px solid var(--accent-line);
+  color: var(--accent-deep);
+  font-size: var(--t-11);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+.doc__tipo.pdf { background: var(--down-tint); border-color: var(--down-line); color: var(--down); }
+.doc__nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc__etiqueta {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  padding: 5px 8px;
+  font: inherit;
+  color: inherit;
+}
+.doc__etiqueta:hover { border-color: var(--line); background: var(--surface); }
+.doc__etiqueta:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: var(--ring);
+}
+.doc__meta { color: var(--ink-3); font-size: var(--t-12); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.doc.subiendo { color: var(--ink-3); }
+
+.datos { display: flex; flex-direction: column; }
+.datos > div {
+  display: flex;
+  gap: var(--s4);
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: var(--t-13);
+}
+.datos > div:last-child { border-bottom: 0; }
+.datos dt { flex: 0 0 190px; color: var(--ink-3); }
+.datos dd { flex: 1; min-width: 0; }
+.datos dd small {
+  display: block;
+  font-size: var(--t-11);
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+/* ─── Total de una operación ─────────────────────────────────────────────── */
+
+.total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+  flex-wrap: wrap;
+  margin-top: var(--s5);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--line);
+}
+.total span { font-size: var(--t-13); color: var(--ink-3); }
+.total b {
+  font-size: var(--t-30);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Marca de estado ────────────────────────────────────────────────────── */
+
+.marca {
+  display: inline-block;
+  font-size: var(--t-11);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 1px 9px;
+  white-space: nowrap;
+}
+.marca.is-warn { background: var(--gold-tint); border-color: var(--gold-line); color: var(--gold-ink); }
+.marca.is-ok { background: var(--up-tint); border-color: var(--up-line); color: var(--up); }
+.marca.is-bad { background: var(--down-tint); border-color: var(--down-line); color: var(--down); }
+.marca.is-info { background: var(--sunken); border-color: var(--line); color: var(--ink-3); }
+
+/* ─── Movimiento ─────────────────────────────────────────────────────────── */
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes toast-in {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 0 3px oklch(0.50 0.13 150 / 0.16); }
+  50% { box-shadow: 0 0 0 6px oklch(0.50 0.13 150 / 0.04); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

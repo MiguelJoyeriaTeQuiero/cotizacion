@@ -1,0 +1,5152 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "TQM · API del alcance actual",
+    "version": "0.1.0",
+    "description": "**Contrato revisado frente al código inventariado.**\n\n**Vista del alcance actual: sin endpoints de cierres.** Esta selección documental no aplica un bloqueo de producción.\n\nDocumentación en español de la implementación existente. Los cambios propuestos en la auditoría no se presentan como ya implementados. Todos los ejemplos son sintéticos.\n\n**Autenticación:** cookies HttpOnly `tqm_admin` y `tqm_cliente`, sin Bearer. Las mutaciones requieren `Origin`. Las sesiones se obtienen en la aplicación; el campo Authorize de Swagger no puede establecer una cookie HttpOnly. El explorador local es de consulta: no ejecuta peticiones contra la API.\n\n**Convenciones:** JSON salvo documentos/PDF/CSV; importes EUR y pesos en gramos; fechas ISO 8601 salvo fetchedAt/t/credencialesEn en milisegundos Unix. Un POST puede ofrecer varias acciones: elegir el ejemplo y esquema correspondientes.\n\n[Guía del proyecto, configuración y mantenimiento](/docs/guia) · [Auditoría y límites conocidos](/docs/auditoria) · [Descargar OpenAPI completo](/docs/openapi.json)"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Desarrollo local de la aplicación. Puerto ajustable al importar el contrato; Swagger local no ejecuta operaciones."
+    }
+  ],
+  "security": [],
+  "tags": [
+    {
+      "name": "Precios públicos",
+      "description": "Cotización y precios de la web pública."
+    },
+    {
+      "name": "Sesión administrativa",
+      "description": "Acceso por cookie HttpOnly de personal de TQM."
+    },
+    {
+      "name": "Fórmulas y escenarios",
+      "description": "Factores comerciales privados, publicaciones y borradores."
+    },
+    {
+      "name": "Historial y series",
+      "description": "Versiones de fórmulas y muestras de mercado."
+    },
+    {
+      "name": "Clientes y documentación",
+      "description": "Revisión administrativa y documentos del propio cliente."
+    },
+    {
+      "name": "Cuenta del portal",
+      "description": "Alta, acceso, recuperación y presentación del expediente."
+    }
+  ],
+  "paths": {
+    "/api/prices": {
+      "get": {
+        "x-source-file": "api/prices.js",
+        "tags": [
+          "Precios públicos"
+        ],
+        "operationId": "consultarPrecios",
+        "summary": "Cotización y precios por ley",
+        "security": [],
+        "description": "Devuelve EUR/oz y EUR/g ya calculados, sin f1/f2/f3. Consulta GoldAPI si la caché ha vencido. En caída entrega el último dato o fixing de emergencia con stale=true. Puede responder 200 con respaldo; comprobar stale y fetchedAt. Registra muestras cuando el mercado está vigente. Los precios públicos no están vinculados a una reserva de cierre.",
+        "responses": {
+          "200": {
+            "description": "Precios calculados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Precios"
+                },
+                "examples": {
+                  "vigente": {
+                    "summary": "Datos ficticios vigentes",
+                    "value": {
+                      "fixing": {
+                        "gold": 3110,
+                        "silver": 31.1
+                      },
+                      "change": {
+                        "gold": 0.5,
+                        "silver": -0.2
+                      },
+                      "fetchedAt": 1789635600000,
+                      "stale": false,
+                      "refreshSeconds": 60,
+                      "formulasVersion": 2,
+                      "gold": [
+                        {
+                          "key": "au18",
+                          "label": "Oro 18k",
+                          "fineness": 750,
+                          "pricePerGram": 75
+                        }
+                      ],
+                      "silver": [
+                        {
+                          "key": "ag925",
+                          "label": "Plata 925",
+                          "fineness": 925,
+                          "pricePerGram": 0.925
+                        }
+                      ]
+                    }
+                  },
+                  "retrasado": {
+                    "summary": "Último dato conocido",
+                    "value": {
+                      "fixing": {
+                        "gold": 3110,
+                        "silver": 31.1
+                      },
+                      "change": {
+                        "gold": 0.5,
+                        "silver": -0.2
+                      },
+                      "fetchedAt": 1789635600000,
+                      "stale": true,
+                      "refreshSeconds": 60,
+                      "formulasVersion": 2,
+                      "gold": [
+                        {
+                          "key": "au18",
+                          "label": "Oro 18k",
+                          "fineness": 750,
+                          "pricePerGram": 75
+                        }
+                      ],
+                      "silver": [
+                        {
+                          "key": "ag925",
+                          "label": "Plata 925",
+                          "fineness": 925,
+                          "pricePerGram": 0.925
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "public, s-maxage=30, stale-while-revalidate=300"
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          },
+          "503": {
+            "description": "Servicio o configuración no disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Servicio o configuración no disponible."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-audit-findings": [
+          "INT-05",
+          "INT-08",
+          "ARQ-02"
+        ]
+      },
+      "head": {
+        "x-source-file": "api/prices.js",
+        "tags": [
+          "Precios públicos"
+        ],
+        "operationId": "cabecerasPrecios",
+        "summary": "Cabeceras de la cotización",
+        "security": [],
+        "description": "Ejecuta actualmente el mismo cálculo que GET; el transporte HTTP omite el cuerpo. No es una comprobación de salud sin efectos: puede refrescar caché y registrar muestra.",
+        "responses": {
+          "200": {
+            "description": "Mismas cabeceras de GET, sin cuerpo."
+          },
+          "503": {
+            "description": "Cotización temporalmente no disponible, sin cuerpo."
+          }
+        }
+      }
+    },
+    "/api/admin/login": {
+      "post": {
+        "x-source-file": "api/admin/login.js",
+        "tags": [
+          "Sesión administrativa"
+        ],
+        "operationId": "entrarAdmin",
+        "summary": "Iniciar sesión administrativa",
+        "security": [],
+        "description": "20 fallos por IP en 15 minutos según el limitador actual. El éxito limpia ese contador. Sesión de 12 horas absolutas y 45 minutos de inactividad. Devuelve cookie, no un token Bearer. El modo de desarrollo puede proporcionar una cuenta local si no se configura ninguna.",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Origen exacto de la aplicación. El navegador lo envía; en un cliente HTTP indicar, por ejemplo, http://localhost:3000. La implementación compara el host; véase SEC-11.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "http://localhost:3000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginAdmin"
+              },
+              "examples": {
+                "acceso": {
+                  "summary": "Cuenta ficticia; usar credenciales propias",
+                  "value": {
+                    "username": "operador",
+                    "password": "Ejemplo-sintetico-2026"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sesión iniciada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SesionAdmin"
+                },
+                "examples": {
+                  "sesion": {
+                    "summary": "Usuario administrativo",
+                    "value": {
+                      "user": {
+                        "username": "operador",
+                        "name": "Operador de ejemplo"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Set-Cookie": {
+                "description": "Cookie HttpOnly y SameSite=Strict, Secure en despliegue Vercel no local. El navegador la gestiona.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Petición no válida o acción no reconocida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Petición no válida o acción no reconocida."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesión o credenciales incorrectas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Sin sesión o credenciales incorrectas."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origen o permiso no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Origen o permiso no permitido."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          },
+          "429": {
+            "description": "Límite de intentos o solicitudes alcanzado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Límite de intentos o solicitudes alcanzado."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Servicio o configuración no disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Servicio o configuración no disponible."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-audit-findings": [
+          "SEC-04",
+          "SEC-10"
+        ]
+      }
+    },
+    "/api/admin/logout": {
+      "post": {
+        "x-source-file": "api/admin/logout.js",
+        "tags": [
+          "Sesión administrativa"
+        ],
+        "operationId": "salirAdmin",
+        "summary": "Cerrar sesión administrativa",
+        "security": [],
+        "description": "Acepta ausencia de sesión: elimina la cookie y solicita borrado del token si existe. Requiere Origin incluso sin sesión.",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Origen exacto de la aplicación. El navegador lo envía; en un cliente HTTP indicar, por ejemplo, http://localhost:3000. La implementación compara el host; véase SEC-11.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "http://localhost:3000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cookie expirada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                },
+                "examples": {
+                  "ok": {
+                    "summary": "Resultado",
+                    "value": {
+                      "ok": true
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Set-Cookie": {
+                "description": "Cookie HttpOnly y SameSite=Strict, Secure en despliegue Vercel no local. El navegador la gestiona.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origen o permiso no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Origen o permiso no permitido."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/session": {
+      "get": {
+        "x-source-file": "api/admin/session.js",
+        "tags": [
+          "Sesión administrativa"
+        ],
+        "operationId": "sesionAdmin",
+        "summary": "Consultar sesión administrativa",
+        "security": [
+          {
+            "AdminCookie": []
+          }
+        ],
+        "description": "Valida la existencia actual del usuario y renueva la caducidad por inactividad sin superar el límite absoluto.",
+        "responses": {
+          "200": {
+            "description": "Usuario identificado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SesionAdmin"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesión o credenciales incorrectas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Sin sesión o credenciales incorrectas."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/formulas": {
+      "get": {
+        "x-source-file": "api/admin/formulas.js",
+        "tags": [
+          "Fórmulas y escenarios"
+        ],
+        "operationId": "consultarFormulas",
+        "summary": "Leer fórmulas completas",
+        "security": [
+          {
+            "AdminCookie": []
+          }
+        ],
+        "description": "Incluye factores comerciales privados, revisión y origen store/defaults/fallback. El respaldo es comportamiento actual; no significa que la lectura del almacén haya sido satisfactoria.",
+        "responses": {
+          "200": {
+            "description": "Documento vigente o de respaldo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Formulas"
+                },
+                "examples": {
+                  "formulas": {
+                    "summary": "Fórmulas sintéticas",
+                    "value": {
+                      "divisor": 31.1,
+                      "refreshSeconds": 60,
+                      "gold": [
+                        {
+                          "key": "au18",
+                          "label": "Oro 18k",
+                          "fineness": 750,
+                          "f1": 1,
+                          "f2": 1,
+                          "f3": 0
+                        }
+                      ],
+                      "silver": [
+                        {
+                          "key": "ag925",
+                          "label": "Plata 925",
+                          "fineness": 925,
+                          "f1": 1,
+                          "f2": 1,
+                          "f3": 0
+                        }
+                      ],
+                      "version": 2,
+                      "updatedAt": "2026-09-17T09:00:00.000Z",
+                      "updatedBy": "operador",
+                      "fixingAtPublish": {
+                        "gold": 3110,
+                        "silver": 31.1,
+                        "at": 1789635600000
+                      },
+                      "source": "store"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesión o credenciales incorrectas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Sin sesión o credenciales incorrectas."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          }
+        },
+        "x-audit-findings": [
+          "INT-05"
+        ]
+      },
+      "put": {
+        "x-source-file": "api/admin/formulas.js",
+        "tags": [
+          "Fórmulas y escenarios"
+        ],
+        "operationId": "publicarFormulas",
+        "summary": "Publicar una revisión de fórmulas",
+        "security": [
+          {
+            "AdminCookie": []
+          }
+        ],
+        "description": "Valida tabla de oro/plata, escribe versión e historial. expectedVersion es opcional en el código actual y su comprobación no es atómica. Las leyes deben ser únicas por metal. No hay PATCH: se envían las dos tablas completas.",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Origen exacto de la aplicación. El navegador lo envía; en un cliente HTTP indicar, por ejemplo, http://localhost:3000. La implementación compara el host; véase SEC-11.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "http://localhost:3000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicarFormulas"
+              },
+              "examples": {
+                "publicar": {
+                  "summary": "Publicar tras consultar la versión",
+                  "value": {
+                    "divisor": 31.1,
+                    "refreshSeconds": 60,
+                    "gold": [
+                      {
+                        "key": "au18",
+                        "label": "Oro 18k",
+                        "fineness": 750,
+                        "f1": 1,
+                        "f2": 1,
+                        "f3": 0
+                      }
+                    ],
+                    "silver": [
+                      {
+                        "key": "ag925",
+                        "label": "Plata 925",
+                        "fineness": 925,
+                        "f1": 1,
+                        "f2": 1,
+                        "f3": 0
+                      }
+                    ],
+                    "expectedVersion": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Publicación guardada; source no se incluye en PUT.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Formulas"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Petición no válida o acción no reconocida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Petición no válida o acción no reconocida."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesión o credenciales incorrectas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Sin sesión o credenciales incorrectas."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origen o permiso no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Origen o permiso no permitido."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de estado, versión, duplicidad o límite del expediente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Conflicto de estado, versión, duplicidad o límite del expediente."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validación de datos fallida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Validación de datos fallida."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "No se pudo completar la escritura.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "No se pudo completar la escritura."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Servicio o configuración no disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Servicio o configuración no disponible."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-audit-findings": [
+          "INT-01"
+        ]
+      }
+    },
+    "/api/admin/history": {
+      "get": {
+        "x-source-file": "api/admin/history.js",
+        "tags": [
+          "Historial y series"
+        ],
+        "operationId": "historialFormulas",
+        "summary": "Últimas publicaciones de fórmulas",
+        "security": [
+          {
+            "AdminCookie": []
+          }
+        ],
+        "description": "Hasta 50 entradas, recientes primero, con autor, IP, fixing y snapshot. Un fallo de lectura puede producir lista vacía en el código actual. Para restaurar se publica el snapshot mediante PUT /api/admin/formulas; no hay endpoint específico de rollback.",
+        "responses": {
+          "200": {
+            "description": "Historial disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Historial"
+                },
+                "examples": {
+                  "vacio": {
+                    "summary": "Sin publicaciones",
+                    "value": {
+                      "entries": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesión o credenciales incorrectas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Sin sesión o credenciales incorrectas."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          }
+        },
+        "x-audit-findings": [
+          "ARQ-07",
+          "ARQ-08"
+        ]
+      }
+    },
+    "/api/admin/series": {
+      "get": {
+        "x-source-file": "api/admin/series.js",
+        "tags": [
+          "Historial y series"
+        ],
+        "operationId": "seriePrecios",
+        "summary": "Evolución de precios publicados",
+        "security": [
+          {
+            "AdminCookie": []
+          }
+        ],
+        "description": "Ventanas 7, 30 o 90 días; cualquier otra entrada usa 30. Filtra y ordena cronológicamente hasta 1.000 muestras almacenadas y devuelve como máximo 240 por muestreo. total cuenta todas las muestras almacenadas, antes del filtro. El histórico se alimenta del tráfico a prices.",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "Ventana solicitada; valor por defecto 30.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                7,
+                30,
+                90
+              ],
+              "default": 30
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Serie reducida para visualización.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Serie"
+                },
+                "examples": {
+                  "vacia": {
+                    "summary": "Sin muestras",
+                    "value": {
+                      "days": 30,
+                      "total": 0,
+                      "samples": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesión o credenciales incorrectas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Sin sesión o credenciales incorrectas."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          }
+        },
+        "x-audit-findings": [
+          "ARQ-07"
+        ]
+      }
+    },
+    "/api/admin/scenarios": {
+      "get": {
+        "x-source-file": "api/admin/scenarios.js",
+        "tags": [
+          "Fórmulas y escenarios"
+        ],
+        "operationId": "listarEscenarios",
+        "summary": "Listar escenarios sin publicar",
+        "security": [
+          {
+            "AdminCookie": []
+          }
+        ],
+        "description": "Hasta 12 borradores con nombre. Guardar un escenario no modifica los precios públicos.",
+        "responses": {
+          "200": {
+            "description": "Escenarios guardados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Escenarios"
+                },
+                "examples": {
+                  "vacio": {
+                    "summary": "Sin escenarios",
+                    "value": {
+                      "scenarios": [],
+                      "max": 12
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesión o credenciales incorrectas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Sin sesión o credenciales incorrectas."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "x-source-file": "api/admin/scenarios.js",
+        "tags": [
+          "Fórmulas y escenarios"
+        ],
+        "operationId": "guardarEscenario",
+        "summary": "Guardar o reemplazar un escenario",
+        "security": [
+          {
+            "AdminCookie": []
+          }
+        ],
+        "description": "El mismo nombre reemplaza el escenario anterior. Un nombre nuevo se coloca primero; si se supera el máximo, el escenario más antiguo se descarta. No se devuelve conflicto por alcanzar el máximo.",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Origen exacto de la aplicación. El navegador lo envía; en un cliente HTTP indicar, por ejemplo, http://localhost:3000. La implementación compara el host; véase SEC-11.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "http://localhost:3000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardarEscenario"
+              },
+              "examples": {
+                "guardar": {
+                  "summary": "Borrador sintético",
+                  "value": {
+                    "name": "Ejemplo septiembre",
+                    "snapshot": {
+                      "divisor": 31.1,
+                      "refreshSeconds": 60,
+                      "gold": [
+                        {
+                          "key": "au18",
+                          "label": "Oro 18k",
+                          "fineness": 750,
+                          "f1": 1,
+                          "f2": 1,
+                          "f3": 0
+                        }
+                      ],
+                      "silver": [
+                        {
+                          "key": "ag925",
+                          "label": "Plata 925",
+                          "fineness": 925,
+                          "f1": 1,
+                          "f2": 1,
+                          "f3": 0
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Lista tras guardar.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Escenarios"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Petición no válida o acción no reconocida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Petición no válida o acción no reconocida."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesión o credenciales incorrectas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Sin sesión o credenciales incorrectas."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origen o permiso no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Origen o permiso no permitido."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          },
+          "422": {
+            "description": "Validación de datos fallida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Validación de datos fallida."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "No se pudo completar la escritura.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "No se pudo completar la escritura."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Servicio o configuración no disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Servicio o configuración no disponible."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "x-source-file": "api/admin/scenarios.js",
+        "tags": [
+          "Fórmulas y escenarios"
+        ],
+        "operationId": "borrarEscenario",
+        "summary": "Borrar un escenario por nombre",
+        "security": [
+          {
+            "AdminCookie": []
+          }
+        ],
+        "description": "DELETE con cuerpo JSON. Si el nombre no existe, devuelve la lista sin cambios.",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Origen exacto de la aplicación. El navegador lo envía; en un cliente HTTP indicar, por ejemplo, http://localhost:3000. La implementación compara el host; véase SEC-11.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "http://localhost:3000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BorrarEscenario"
+              },
+              "examples": {
+                "borrar": {
+                  "summary": "Nombre exacto",
+                  "value": {
+                    "name": "Ejemplo septiembre"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Lista restante.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Escenarios"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Petición no válida o acción no reconocida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Petición no válida o acción no reconocida."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesión o credenciales incorrectas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Sin sesión o credenciales incorrectas."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origen o permiso no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Origen o permiso no permitido."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          },
+          "422": {
+            "description": "Validación de datos fallida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Validación de datos fallida."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "No se pudo completar la escritura.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "No se pudo completar la escritura."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Servicio o configuración no disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Servicio o configuración no disponible."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/clientes": {
+      "get": {
+        "x-source-file": "api/admin/clientes.js",
+        "tags": [
+          "Clientes y documentación"
+        ],
+        "operationId": "consultarClientes",
+        "summary": "Listar clientes, abrir expediente o leer documento",
+        "security": [
+          {
+            "AdminCookie": []
+          }
+        ],
+        "description": "Tres variantes en una ruta: sin id devuelve índice; con id devuelve expediente sin password; con id y doc transmite el archivo privado. estado solo filtra la lista y un estado desconocido no la filtra. pendientes se calcula antes del filtro. La lista actual incluye expedientes aún no enviados. Un doc sin id no activa la descarga.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "Identificador de cliente.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "doc",
+            "in": "query",
+            "required": false,
+            "description": "Identificador del documento; necesita id.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "description": "Filtro opcional.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pendiente",
+                "documentacion",
+                "aprobado",
+                "rechazado"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista, expediente o archivo binario según parámetros.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/Clientes"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RespuestaClienteAdmin"
+                    }
+                  ]
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Para archivos: inline; filename=\"nombre-saneado\"."
+              },
+              "Content-Security-Policy": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Para archivos: default-src none y sandbox."
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesión o credenciales incorrectas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Sin sesión o credenciales incorrectas."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso no encontrado o acción local no disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Recurso no encontrado o acción local no disponible."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          }
+        },
+        "x-audit-findings": [
+          "INT-02",
+          "ARQ-08"
+        ]
+      },
+      "put": {
+        "x-source-file": "api/admin/clientes.js",
+        "tags": [
+          "Clientes y documentación"
+        ],
+        "operationId": "gestionarCliente",
+        "summary": "Decidir expediente, ajustar límites o emitir recuperación",
+        "security": [
+          {
+            "AdminCookie": []
+          }
+        ],
+        "description": "| accion | Resultado | Condición |\n|---|---|---|\n| aprobar | Estado aprobado | Nota se vacía |\n| documentacion | Solicita documentos | nota obligatoria |\n| rechazar | Estado rechazado | nota obligatoria |\n| limites | Actualiza límites válidos | Al menos uno válido; destinado a cierres aplazados |\n| clave | Devuelve código de 60 minutos | Debe verificarse la identidad por el procedimiento interno |\n\nEl código actual permite decidir desde cualquier estado; no presupone transiciones adicionales. La nota se trunca a 400 caracteres.",
+        "x-actions": [
+          "aprobar",
+          "documentacion",
+          "rechazar",
+          "limites",
+          "clave"
+        ],
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Origen exacto de la aplicación. El navegador lo envía; en un cliente HTTP indicar, por ejemplo, http://localhost:3000. La implementación compara el host; véase SEC-11.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "http://localhost:3000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/AprobarCliente"
+                  },
+                  {
+                    "$ref": "#/components/schemas/PedirDocumentacion"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RechazarCliente"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CambiarLimites"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GenerarCodigo"
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "accion",
+                  "mapping": {
+                    "aprobar": "#/components/schemas/AprobarCliente",
+                    "documentacion": "#/components/schemas/PedirDocumentacion",
+                    "rechazar": "#/components/schemas/RechazarCliente",
+                    "limites": "#/components/schemas/CambiarLimites",
+                    "clave": "#/components/schemas/GenerarCodigo"
+                  }
+                }
+              },
+              "examples": {
+                "aprobar": {
+                  "summary": "Aprobar",
+                  "value": {
+                    "accion": "aprobar",
+                    "id": "cli_ejemplo01"
+                  }
+                },
+                "documentacion": {
+                  "summary": "Pedir documentos",
+                  "value": {
+                    "accion": "documentacion",
+                    "id": "cli_ejemplo01",
+                    "nota": "Falta el documento identificativo."
+                  }
+                },
+                "rechazar": {
+                  "summary": "Rechazar",
+                  "value": {
+                    "accion": "rechazar",
+                    "id": "cli_ejemplo01",
+                    "nota": "Datos incompletos."
+                  }
+                },
+                "limites": {
+                  "summary": "Límites del módulo aplazado",
+                  "value": {
+                    "accion": "limites",
+                    "id": "cli_ejemplo01",
+                    "limites": {
+                      "porCierre": 5000,
+                      "reservaMinutos": 60
+                    }
+                  }
+                },
+                "clave": {
+                  "summary": "Generar código",
+                  "value": {
+                    "accion": "clave",
+                    "id": "cli_ejemplo01"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Expediente actualizado o código visible una vez.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RespuestaClienteAdmin"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CodigoGenerado"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Petición no válida o acción no reconocida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Petición no válida o acción no reconocida."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesión o credenciales incorrectas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Sin sesión o credenciales incorrectas."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origen o permiso no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Origen o permiso no permitido."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso no encontrado o acción local no disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Recurso no encontrado o acción local no disponible."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          },
+          "422": {
+            "description": "Validación de datos fallida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Validación de datos fallida."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-audit-findings": [
+          "SEC-03",
+          "INT-02"
+        ]
+      }
+    },
+    "/api/portal/cuenta": {
+      "get": {
+        "x-source-file": "api/portal/cuenta.js",
+        "tags": [
+          "Cuenta del portal"
+        ],
+        "operationId": "sesionCliente",
+        "summary": "Consultar cuenta y modo de documentos",
+        "security": [
+          {
+            "PortalCookie": []
+          }
+        ],
+        "description": "Renueva inactividad. Si no hay sesión, responde 401 y expira la cookie. Devuelve todos los datos del propio expediente, sin hash de contraseña, URL de documentos ni historial interno.",
+        "responses": {
+          "200": {
+            "description": "Cuenta identificada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cuenta"
+                },
+                "examples": {
+                  "cuenta": {
+                    "summary": "Cuenta sintética",
+                    "value": {
+                      "cliente": {
+                        "id": "cli_ejemplo01",
+                        "estado": "pendiente",
+                        "enviadoEn": null,
+                        "nota": null,
+                        "empresa": {
+                          "razonSocial": "Joyería Ejemplo SL",
+                          "cif": "B12345678",
+                          "nombreComercial": "Joyería Ejemplo",
+                          "direccion": "Calle de Ejemplo 10",
+                          "poblacion": "Santa Cruz de Tenerife",
+                          "provincia": "Santa Cruz de Tenerife",
+                          "cp": "38001",
+                          "iae": "491.1"
+                        },
+                        "contacto": {
+                          "persona": "Persona de ejemplo",
+                          "telefono": "+34922000000",
+                          "telefonoTienda": "",
+                          "email": "tienda@example.test"
+                        },
+                        "titular": {
+                          "nombre": "Persona de ejemplo",
+                          "dni": "00000000T"
+                        },
+                        "cobro": {
+                          "iban": "ES9121000418450200051332"
+                        },
+                        "documentos": [],
+                        "limites": {
+                          "porCierre": 5000,
+                          "reservaMinutos": 60
+                        },
+                        "creadoEn": "2026-09-17T09:00:00.000Z"
+                      },
+                      "almacen": "memoria"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesión o credenciales incorrectas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Sin sesión o credenciales incorrectas."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "x-source-file": "api/portal/cuenta.js",
+        "tags": [
+          "Cuenta del portal"
+        ],
+        "operationId": "gestionarCuenta",
+        "summary": "Alta, acceso, recuperación, revisión y salida",
+        "security": [
+          {},
+          {
+            "PortalCookie": []
+          }
+        ],
+        "description": "| accion | Sesión previa | Éxito | Cuota actual |\n|---|---|---|---|\n| alta | No | 201, crea sesión | 5 altas/hora/IP; conflictos no consumen |\n| entrar | No | 200, crea sesión | 20 fallos/15 min/IP |\n| salir | No obligatoria | 200, expira cookie | — |\n| olvide | No | 200 genérico | 5/hora/IP |\n| restablecer | Código válido | 200, cambia clave y crea sesión | 20/hora/IP |\n| enviar | Sí | 200, vuelve a pendiente | Al menos un documento; no aprobado |\n| demo | No, solo desarrollo | 200, crea/modifica cuenta aprobada | Sin cuota; no abre sesión |\n\nSesión cliente: 30 días absolutos y 12 horas de inactividad. olvide devuelve ok aunque no exista el correo o el proveedor no envíe el mensaje; la emisión asistida del código se hace desde administración. Los límites, revocación y consumo de códigos tienen incidencias abiertas en la auditoría.",
+        "x-actions": [
+          "alta",
+          "entrar",
+          "salir",
+          "olvide",
+          "restablecer",
+          "enviar",
+          "demo"
+        ],
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Origen exacto de la aplicación. El navegador lo envía; en un cliente HTTP indicar, por ejemplo, http://localhost:3000. La implementación compara el host; véase SEC-11.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "http://localhost:3000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/Alta"
+                  },
+                  {
+                    "$ref": "#/components/schemas/Entrar"
+                  },
+                  {
+                    "$ref": "#/components/schemas/Salir"
+                  },
+                  {
+                    "$ref": "#/components/schemas/Olvide"
+                  },
+                  {
+                    "$ref": "#/components/schemas/Restablecer"
+                  },
+                  {
+                    "$ref": "#/components/schemas/EnviarSolicitud"
+                  },
+                  {
+                    "$ref": "#/components/schemas/Demo"
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "accion",
+                  "mapping": {
+                    "alta": "#/components/schemas/Alta",
+                    "entrar": "#/components/schemas/Entrar",
+                    "salir": "#/components/schemas/Salir",
+                    "olvide": "#/components/schemas/Olvide",
+                    "restablecer": "#/components/schemas/Restablecer",
+                    "enviar": "#/components/schemas/EnviarSolicitud",
+                    "demo": "#/components/schemas/Demo"
+                  }
+                }
+              },
+              "examples": {
+                "alta": {
+                  "summary": "Alta sintética completa",
+                  "value": {
+                    "accion": "alta",
+                    "empresa": {
+                      "razonSocial": "Joyería Ejemplo SL",
+                      "cif": "B12345678",
+                      "nombreComercial": "Joyería Ejemplo",
+                      "direccion": "Calle de Ejemplo 10",
+                      "poblacion": "Santa Cruz de Tenerife",
+                      "provincia": "Santa Cruz de Tenerife",
+                      "cp": "38001",
+                      "iae": "491.1"
+                    },
+                    "contacto": {
+                      "persona": "Persona de ejemplo",
+                      "telefono": "+34922000000",
+                      "telefonoTienda": "",
+                      "email": "tienda@example.test"
+                    },
+                    "titular": {
+                      "nombre": "Persona de ejemplo",
+                      "dni": "00000000T"
+                    },
+                    "cobro": {
+                      "iban": "ES9121000418450200051332"
+                    },
+                    "password": "Ejemplo-sintetico-2026",
+                    "condiciones": true
+                  }
+                },
+                "entrar": {
+                  "summary": "Acceder",
+                  "value": {
+                    "accion": "entrar",
+                    "email": "tienda@example.test",
+                    "password": "Ejemplo-sintetico-2026"
+                  }
+                },
+                "salir": {
+                  "summary": "Cerrar sesión",
+                  "value": {
+                    "accion": "salir"
+                  }
+                },
+                "olvide": {
+                  "summary": "Solicitar recuperación",
+                  "value": {
+                    "accion": "olvide",
+                    "email": "tienda@example.test"
+                  }
+                },
+                "restablecer": {
+                  "summary": "Código ficticio",
+                  "value": {
+                    "accion": "restablecer",
+                    "token": "2345-6789-ABCD-EFGH",
+                    "password": "Otro-ejemplo-sintetico-2026"
+                  }
+                },
+                "enviar": {
+                  "summary": "Enviar expediente a revisión",
+                  "value": {
+                    "accion": "enviar"
+                  }
+                },
+                "demo": {
+                  "summary": "Solo entorno de pruebas aislado",
+                  "value": {
+                    "accion": "demo",
+                    "email": "demo@example.test",
+                    "password": "Ejemplo-sintetico-2026",
+                    "razonSocial": "Empresa sintética"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado según acción.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Cuenta"
+                    },
+                    {
+                      "$ref": "#/components/schemas/Ok"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RespuestaDemo"
+                    }
+                  ]
+                }
+              }
+            },
+            "headers": {
+              "Set-Cookie": {
+                "description": "Cookie HttpOnly y SameSite=Strict, Secure en despliegue Vercel no local. El navegador la gestiona.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Alta creada y sesión abierta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cuenta"
+                },
+                "examples": {
+                  "alta": {
+                    "summary": "Resultado sintético",
+                    "value": {
+                      "cliente": {
+                        "id": "cli_ejemplo01",
+                        "estado": "pendiente",
+                        "enviadoEn": null,
+                        "nota": null,
+                        "empresa": {
+                          "razonSocial": "Joyería Ejemplo SL",
+                          "cif": "B12345678",
+                          "nombreComercial": "Joyería Ejemplo",
+                          "direccion": "Calle de Ejemplo 10",
+                          "poblacion": "Santa Cruz de Tenerife",
+                          "provincia": "Santa Cruz de Tenerife",
+                          "cp": "38001",
+                          "iae": "491.1"
+                        },
+                        "contacto": {
+                          "persona": "Persona de ejemplo",
+                          "telefono": "+34922000000",
+                          "telefonoTienda": "",
+                          "email": "tienda@example.test"
+                        },
+                        "titular": {
+                          "nombre": "Persona de ejemplo",
+                          "dni": "00000000T"
+                        },
+                        "cobro": {
+                          "iban": "ES9121000418450200051332"
+                        },
+                        "documentos": [],
+                        "limites": {
+                          "porCierre": 5000,
+                          "reservaMinutos": 60
+                        },
+                        "creadoEn": "2026-09-17T09:00:00.000Z"
+                      },
+                      "almacen": "memoria"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Set-Cookie": {
+                "description": "Cookie HttpOnly y SameSite=Strict, Secure en despliegue Vercel no local. El navegador la gestiona.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Petición no válida o acción no reconocida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Petición no válida o acción no reconocida."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesión o credenciales incorrectas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Sin sesión o credenciales incorrectas."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origen o permiso no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Origen o permiso no permitido."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso no encontrado o acción local no disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Recurso no encontrado o acción local no disponible."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de estado, versión, duplicidad o límite del expediente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Conflicto de estado, versión, duplicidad o límite del expediente."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validación de datos fallida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Validación de datos fallida."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Límite de intentos o solicitudes alcanzado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Límite de intentos o solicitudes alcanzado."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Servicio o configuración no disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Servicio o configuración no disponible."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-audit-findings": [
+          "SEC-02",
+          "SEC-03",
+          "SEC-05",
+          "SEC-06",
+          "SEC-12"
+        ]
+      }
+    },
+    "/api/portal/documentos": {
+      "post": {
+        "x-source-file": "api/portal/documentos.js",
+        "tags": [
+          "Clientes y documentación"
+        ],
+        "operationId": "gestionarDocumento",
+        "summary": "Autorizar subida, registrar archivo o cambiar etiqueta",
+        "security": [
+          {
+            "PortalCookie": []
+          }
+        ],
+        "description": "Requiere expediente no aprobado. Máximo actual de 10 documentos asociados, PDF/JPEG/PNG/WEBP; hasta 8 MiB en Blob y 2,5 MiB en memoria. Cuerpo JSON declarado hasta 5 MiB (el bypass del preprocesado está auditado).\n\n1. En Blob, el SDK pide token mediante type=blob.generate-client-token (10 minutos de vigencia, ruta clientes/{id}/ y sufijo aleatorio).\n2. El navegador sube directamente a Blob con el SDK.\n3. Confirma con accion=confirmar y la referencia del resultado.\n4. En memoria usa accion=local con base64.\n5. accion=etiqueta renombra un documento.\n\nNo es una subida multipart/form-data a esta API. Los callbacks internos del SDK también pasan primero por autenticación y Origin: no hay webhook público adicional. El código comprueba firma inicial, no análisis antimalware; no garantiza cuota total de 40 MB ni reserva de subidas pendientes. La propiedad URL/ruta y la CSP tienen incidencias abiertas.",
+        "x-actions": [
+          "confirmar",
+          "local",
+          "etiqueta"
+        ],
+        "x-sdk-events": [
+          "blob.generate-client-token",
+          "blob.upload-completed"
+        ],
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Origen exacto de la aplicación. El navegador lo envía; en un cliente HTTP indicar, por ejemplo, http://localhost:3000. La implementación compara el host; véase SEC-11.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "http://localhost:3000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ConfirmarDocumento"
+                  },
+                  {
+                    "$ref": "#/components/schemas/DocumentoLocal"
+                  },
+                  {
+                    "$ref": "#/components/schemas/EtiquetarDocumento"
+                  },
+                  {
+                    "$ref": "#/components/schemas/BlobToken"
+                  },
+                  {
+                    "$ref": "#/components/schemas/BlobUploaded"
+                  }
+                ]
+              },
+              "examples": {
+                "token": {
+                  "summary": "Evento generado por el SDK",
+                  "value": {
+                    "type": "blob.generate-client-token",
+                    "payload": {
+                      "pathname": "clientes/cli_ejemplo01/identificacion.pdf",
+                      "multipart": false,
+                      "clientPayload": null
+                    }
+                  }
+                },
+                "confirmar": {
+                  "summary": "URL de ejemplo no operativa",
+                  "value": {
+                    "accion": "confirmar",
+                    "url": "https://example.private.blob.vercel-storage.com/clientes/cli_ejemplo01/archivo-ejemplo.pdf",
+                    "pathname": "clientes/cli_ejemplo01/archivo-ejemplo.pdf",
+                    "nombre": "identificacion.pdf",
+                    "etiqueta": "Identificación"
+                  }
+                },
+                "local": {
+                  "summary": "Bytes sintéticos de cabecera, no documento real",
+                  "value": {
+                    "accion": "local",
+                    "base64": "JVBERi0xLjQK",
+                    "tipo": "application/pdf",
+                    "nombre": "ejemplo.pdf",
+                    "etiqueta": "Ejemplo local"
+                  }
+                },
+                "etiqueta": {
+                  "summary": "Cambiar etiqueta",
+                  "value": {
+                    "accion": "etiqueta",
+                    "id": "doc_ejemplo1",
+                    "etiqueta": "Identificación actualizada"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cliente actualizado o respuesta del SDK.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RespuestaCliente"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BlobTokenRespuesta"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BlobUploadedRespuesta"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Petición no válida o acción no reconocida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Petición no válida o acción no reconocida."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesión o credenciales incorrectas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Sin sesión o credenciales incorrectas."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origen o permiso no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Origen o permiso no permitido."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso no encontrado o acción local no disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Recurso no encontrado o acción local no disponible."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de estado, versión, duplicidad o límite del expediente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Conflicto de estado, versión, duplicidad o límite del expediente."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validación de datos fallida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Validación de datos fallida."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Modalidad de archivos no configurada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Modalidad de archivos no configurada."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-audit-findings": [
+          "SEC-01",
+          "SEC-08",
+          "SEC-09",
+          "INT-10"
+        ]
+      },
+      "delete": {
+        "x-source-file": "api/portal/documentos.js",
+        "tags": [
+          "Clientes y documentación"
+        ],
+        "operationId": "borrarDocumento",
+        "summary": "Quitar un documento del expediente editable",
+        "security": [
+          {
+            "PortalCookie": []
+          }
+        ],
+        "description": "Busca el identificador dentro del expediente, intenta eliminar el objeto y guarda la lista restante. El borrado físico puede fallar y dejar un huérfano aunque se responda 200.",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Origen exacto de la aplicación. El navegador lo envía; en un cliente HTTP indicar, por ejemplo, http://localhost:3000. La implementación compara el host; véase SEC-11.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "http://localhost:3000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BorrarDocumento"
+              },
+              "examples": {
+                "borrar": {
+                  "summary": "Documento sintético",
+                  "value": {
+                    "id": "doc_ejemplo1"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Expediente actualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaCliente"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Petición no válida o acción no reconocida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Petición no válida o acción no reconocida."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sin sesión o credenciales incorrectas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Sin sesión o credenciales incorrectas."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origen o permiso no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Origen o permiso no permitido."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso no encontrado o acción local no disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Recurso no encontrado o acción local no disponible."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método no permitido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Método no permitido."
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Métodos admitidos por el recurso."
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de estado, versión, duplicidad o límite del expediente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Conflicto de estado, versión, duplicidad o límite del expediente."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-audit-findings": [
+          "SEC-01",
+          "SEC-09"
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "AdminCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "tqm_admin",
+        "description": "Cookie HttpOnly emitida por POST /api/admin/login."
+      },
+      "PortalCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "tqm_cliente",
+        "description": "Cookie HttpOnly emitida por alta, entrar o restablecer en POST /api/portal/cuenta."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Mensaje visible del error."
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Error de validación."
+            }
+          },
+          "retryAfter": {
+            "type": "integer",
+            "description": "Segundos de espera cuando el limitador los incluye; viaja en JSON, no se garantiza cabecera Retry-After."
+          },
+          "currentVersion": {
+            "type": "integer",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Última modificación.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "description": "Autor.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "Ok": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "UsuarioAdmin": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Identificador administrativo."
+          },
+          "name": {
+            "type": "string",
+            "description": "Nombre visible."
+          }
+        },
+        "required": [
+          "username",
+          "name"
+        ]
+      },
+      "SesionAdmin": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UsuarioAdmin"
+          }
+        },
+        "required": [
+          "user"
+        ]
+      },
+      "LoginAdmin": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Se normaliza y trunca a 64 caracteres.",
+            "maxLength": 64
+          },
+          "password": {
+            "type": "string",
+            "description": "Se trunca a 256 caracteres.",
+            "format": "password",
+            "maxLength": 256,
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "Fixing": {
+        "type": "object",
+        "properties": {
+          "gold": {
+            "type": "number",
+            "description": "EUR por onza de oro.",
+            "example": 3000
+          },
+          "silver": {
+            "type": "number",
+            "description": "EUR por onza de plata.",
+            "example": 30
+          }
+        },
+        "required": [
+          "gold",
+          "silver"
+        ]
+      },
+      "FixingPublicacion": {
+        "type": "object",
+        "properties": {
+          "gold": {
+            "type": "number",
+            "description": "EUR/oz de oro."
+          },
+          "silver": {
+            "type": "number",
+            "description": "EUR/oz de plata."
+          },
+          "at": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          }
+        },
+        "required": [
+          "gold",
+          "silver"
+        ],
+        "nullable": true
+      },
+      "LeyPublica": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Identificador único dentro de cada metal.",
+            "pattern": "^[a-z][a-z0-9_]{1,23}$",
+            "example": "au18"
+          },
+          "label": {
+            "type": "string",
+            "description": "Nombre de la ley."
+          },
+          "fineness": {
+            "type": "number",
+            "description": "Pureza en milésimas."
+          },
+          "pricePerGram": {
+            "type": "number",
+            "description": "Precio calculado en EUR/g, sin redondeo contractual de cierres."
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "fineness",
+          "pricePerGram"
+        ]
+      },
+      "Precios": {
+        "type": "object",
+        "properties": {
+          "fixing": {
+            "$ref": "#/components/schemas/Fixing"
+          },
+          "change": {
+            "type": "object",
+            "properties": {
+              "gold": {
+                "type": "number",
+                "description": "Variación porcentual."
+              },
+              "silver": {
+                "type": "number",
+                "description": "Variación porcentual."
+              }
+            },
+            "required": [
+              "gold",
+              "silver"
+            ]
+          },
+          "fetchedAt": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "Recepción del proveedor en milisegundos Unix; null para respaldo sin caché."
+          },
+          "stale": {
+            "type": "boolean",
+            "description": "True si se entrega caché vencida o fixing de emergencia."
+          },
+          "refreshSeconds": {
+            "type": "integer",
+            "description": "Frecuencia configurada, en segundos."
+          },
+          "formulasVersion": {
+            "type": "integer",
+            "nullable": true
+          },
+          "gold": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeyPublica"
+            }
+          },
+          "silver": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeyPublica"
+            }
+          }
+        },
+        "required": [
+          "fixing",
+          "change",
+          "fetchedAt",
+          "stale",
+          "refreshSeconds",
+          "formulasVersion",
+          "gold",
+          "silver"
+        ]
+      },
+      "LeyFormula": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Identificador único dentro de cada metal.",
+            "pattern": "^[a-z][a-z0-9_]{1,23}$",
+            "example": "au18"
+          },
+          "label": {
+            "type": "string",
+            "description": "Nombre de la ley.",
+            "minLength": 1,
+            "maxLength": 48
+          },
+          "fineness": {
+            "type": "number",
+            "description": "Pureza; se redondea a dos decimales.",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "f1": {
+            "type": "number",
+            "description": "Factor multiplicativo.",
+            "minimum": 0.01,
+            "maximum": 2
+          },
+          "f2": {
+            "type": "number",
+            "description": "Segundo factor multiplicativo.",
+            "minimum": 0.01,
+            "maximum": 2
+          },
+          "f3": {
+            "type": "number",
+            "description": "Ajuste aditivo en EUR/g; predeterminado cero.",
+            "minimum": -100,
+            "maximum": 100,
+            "default": 0
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "fineness",
+          "f1",
+          "f2"
+        ]
+      },
+      "FormulaSnapshot": {
+        "type": "object",
+        "properties": {
+          "divisor": {
+            "type": "number",
+            "description": "Divisor de conversión usado por el negocio.",
+            "minimum": 1,
+            "maximum": 1000,
+            "example": 31.1
+          },
+          "refreshSeconds": {
+            "type": "integer",
+            "description": "Frecuencia de consulta al mercado.",
+            "minimum": 30,
+            "maximum": 86400,
+            "default": 60
+          },
+          "gold": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeyFormula"
+            },
+            "minItems": 1,
+            "maxItems": 24
+          },
+          "silver": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeyFormula"
+            },
+            "minItems": 1,
+            "maxItems": 24
+          }
+        },
+        "required": [
+          "divisor",
+          "gold",
+          "silver"
+        ],
+        "description": "Valores normalizados. También se aceptan cadenas numéricas en el servidor, aunque aquí se recomienda JSON numérico."
+      },
+      "PublicarFormulas": {
+        "type": "object",
+        "properties": {
+          "divisor": {
+            "type": "number",
+            "description": "Divisor de conversión usado por el negocio.",
+            "minimum": 1,
+            "maximum": 1000,
+            "example": 31.1
+          },
+          "refreshSeconds": {
+            "type": "integer",
+            "description": "Frecuencia de consulta al mercado.",
+            "minimum": 30,
+            "maximum": 86400,
+            "default": 60
+          },
+          "gold": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeyFormula"
+            },
+            "minItems": 1,
+            "maxItems": 24
+          },
+          "silver": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeyFormula"
+            },
+            "minItems": 1,
+            "maxItems": 24
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Opcional en la implementación actual. Comparación no atómica; ver auditoría INT-01."
+          }
+        },
+        "required": [
+          "divisor",
+          "gold",
+          "silver"
+        ]
+      },
+      "Formulas": {
+        "type": "object",
+        "properties": {
+          "divisor": {
+            "type": "number",
+            "description": "Divisor de conversión usado por el negocio.",
+            "minimum": 1,
+            "maximum": 1000,
+            "example": 31.1
+          },
+          "refreshSeconds": {
+            "type": "integer",
+            "description": "Frecuencia de consulta al mercado.",
+            "minimum": 30,
+            "maximum": 86400,
+            "default": 60
+          },
+          "gold": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeyFormula"
+            },
+            "minItems": 1,
+            "maxItems": 24
+          },
+          "silver": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeyFormula"
+            },
+            "minItems": 1,
+            "maxItems": 24
+          },
+          "version": {
+            "type": "integer",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Fecha de publicación.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "description": "Autor.",
+            "nullable": true
+          },
+          "fixingAtPublish": {
+            "$ref": "#/components/schemas/FixingPublicacion"
+          },
+          "source": {
+            "type": "string",
+            "description": "Solo GET: store, defaults o fallback.",
+            "enum": [
+              "store",
+              "defaults",
+              "fallback"
+            ]
+          }
+        },
+        "required": [
+          "divisor",
+          "refreshSeconds",
+          "gold",
+          "silver",
+          "version",
+          "updatedAt",
+          "updatedBy",
+          "fixingAtPublish"
+        ]
+      },
+      "Publicacion": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "description": "Versión."
+          },
+          "at": {
+            "type": "string",
+            "description": "Publicación.",
+            "format": "date-time",
+            "nullable": false
+          },
+          "by": {
+            "type": "string",
+            "description": "Autor."
+          },
+          "ip": {
+            "type": "string",
+            "description": "IP registrada."
+          },
+          "fixing": {
+            "$ref": "#/components/schemas/FixingPublicacion"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/FormulaSnapshot"
+          }
+        },
+        "required": [
+          "version",
+          "at",
+          "by",
+          "ip",
+          "fixing",
+          "snapshot"
+        ]
+      },
+      "Historial": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Publicacion"
+            },
+            "maxItems": 50
+          }
+        },
+        "required": [
+          "entries"
+        ]
+      },
+      "Muestra": {
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Milisegundos Unix."
+          },
+          "fixing": {
+            "$ref": "#/components/schemas/Fixing"
+          },
+          "version": {
+            "type": "integer",
+            "nullable": true
+          },
+          "gold": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "silver": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "t",
+          "fixing",
+          "version",
+          "gold",
+          "silver"
+        ]
+      },
+      "Serie": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "integer",
+            "description": "Ventana efectiva.",
+            "enum": [
+              7,
+              30,
+              90
+            ]
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total almacenado antes de filtrar, no el número de puntos devueltos."
+          },
+          "samples": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Muestra"
+            },
+            "maxItems": 240
+          }
+        },
+        "required": [
+          "days",
+          "total",
+          "samples"
+        ]
+      },
+      "Escenario": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nombre exacto del escenario.",
+            "maxLength": 40
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/FormulaSnapshot"
+          },
+          "savedAt": {
+            "type": "string",
+            "description": "Fecha de guardado.",
+            "format": "date-time",
+            "nullable": false
+          },
+          "savedBy": {
+            "type": "string",
+            "description": "Autor."
+          }
+        },
+        "required": [
+          "name",
+          "snapshot",
+          "savedAt",
+          "savedBy"
+        ]
+      },
+      "Escenarios": {
+        "type": "object",
+        "properties": {
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Escenario"
+            },
+            "maxItems": 12
+          },
+          "max": {
+            "type": "integer",
+            "description": "Capacidad de la lista.",
+            "enum": [
+              12
+            ]
+          }
+        },
+        "required": [
+          "scenarios",
+          "max"
+        ]
+      },
+      "GuardarEscenario": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nombre; se limpian controles/espacios.",
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/FormulaSnapshot"
+          }
+        },
+        "required": [
+          "name",
+          "snapshot"
+        ]
+      },
+      "BorrarEscenario": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nombre exacto.",
+            "minLength": 1,
+            "maxLength": 40
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "Empresa": {
+        "type": "object",
+        "properties": {
+          "razonSocial": {
+            "type": "string",
+            "description": "Razón social; se limpia y trunca a 120 caracteres.",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "cif": {
+            "type": "string",
+            "description": "Comprobación de formato, sin validación de dígito de control.",
+            "pattern": "^[A-Z0-9][0-9]{7}[A-Z0-9]$",
+            "example": "B12345678"
+          },
+          "nombreComercial": {
+            "type": "string",
+            "description": "Opcional; se trunca a 80 caracteres.",
+            "maxLength": 80
+          },
+          "direccion": {
+            "type": "string",
+            "description": "Dirección fiscal.",
+            "minLength": 4,
+            "maxLength": 160
+          },
+          "poblacion": {
+            "type": "string",
+            "description": "Población.",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "provincia": {
+            "type": "string",
+            "description": "Provincia.",
+            "minLength": 2,
+            "maxLength": 60
+          },
+          "cp": {
+            "type": "string",
+            "description": "Código postal de cinco cifras.",
+            "pattern": "^\\d{5}$",
+            "example": "38001"
+          },
+          "iae": {
+            "type": "string",
+            "description": "Epígrafe opcional.",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "razonSocial",
+          "cif",
+          "direccion",
+          "poblacion",
+          "provincia",
+          "cp"
+        ]
+      },
+      "Contacto": {
+        "type": "object",
+        "properties": {
+          "persona": {
+            "type": "string",
+            "description": "Persona de contacto.",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "telefono": {
+            "type": "string",
+            "description": "Formato de teléfono; no se comprueba su existencia.",
+            "maxLength": 20,
+            "example": "+34922000000"
+          },
+          "telefonoTienda": {
+            "type": "string",
+            "description": "Teléfono adicional opcional.",
+            "maxLength": 20
+          },
+          "email": {
+            "type": "string",
+            "description": "Correo normalizado en minúsculas.",
+            "format": "email",
+            "maxLength": 120,
+            "example": "tienda@example.test"
+          }
+        },
+        "required": [
+          "persona",
+          "telefono",
+          "email"
+        ]
+      },
+      "Titular": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "description": "Nombre del administrador/titular.",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "dni": {
+            "type": "string",
+            "description": "7–12 caracteres alfanuméricos, sin validación del dígito de control.",
+            "pattern": "^[A-Z0-9]{7,12}$",
+            "example": "00000000T"
+          }
+        },
+        "required": [
+          "nombre",
+          "dni"
+        ]
+      },
+      "Cobro": {
+        "type": "object",
+        "properties": {
+          "iban": {
+            "type": "string",
+            "description": "IBAN normalizado; se valida formato, no módulo 97.",
+            "pattern": "^[A-Z]{2}\\d{2}[A-Z0-9]{10,30}$",
+            "example": "ES9121000418450200051332"
+          }
+        },
+        "required": [
+          "iban"
+        ]
+      },
+      "LimitesCliente": {
+        "type": "object",
+        "properties": {
+          "porCierre": {
+            "type": "integer",
+            "description": "Umbral informativo actual. No es un rechazo automático del endpoint de cierres.",
+            "minimum": 0,
+            "maximum": 1000000,
+            "default": 5000
+          },
+          "reservaMinutos": {
+            "type": "integer",
+            "description": "Duración de reserva del módulo de cierres aplazado.",
+            "minimum": 5,
+            "maximum": 1440,
+            "default": 60
+          }
+        }
+      },
+      "EstadoCliente": {
+        "type": "string",
+        "description": "Estado del expediente.",
+        "enum": [
+          "pendiente",
+          "documentacion",
+          "aprobado",
+          "rechazado"
+        ]
+      },
+      "DocumentoCliente": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador opaco del documento.",
+            "example": "doc_ejemplo1"
+          },
+          "etiqueta": {
+            "type": "string",
+            "description": "Etiqueta visible.",
+            "maxLength": 40
+          },
+          "nombre": {
+            "type": "string",
+            "description": "Nombre del archivo.",
+            "maxLength": 120
+          },
+          "tipo": {
+            "type": "string",
+            "description": "Tipo admitido.",
+            "enum": [
+              "application/pdf",
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ]
+          },
+          "tamano": {
+            "type": "integer",
+            "description": "Tamaño en bytes.",
+            "minimum": 1,
+            "maximum": 8388608
+          },
+          "subidoEn": {
+            "type": "string",
+            "description": "Fecha de subida.",
+            "format": "date-time",
+            "nullable": false
+          }
+        },
+        "required": [
+          "id",
+          "etiqueta",
+          "nombre",
+          "tipo",
+          "tamano",
+          "subidoEn"
+        ]
+      },
+      "DocumentoAdmin": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador opaco del documento.",
+            "example": "doc_ejemplo1"
+          },
+          "etiqueta": {
+            "type": "string",
+            "description": "Etiqueta visible.",
+            "maxLength": 40
+          },
+          "nombre": {
+            "type": "string",
+            "description": "Nombre del archivo.",
+            "maxLength": 120
+          },
+          "tipo": {
+            "type": "string",
+            "description": "Tipo admitido.",
+            "enum": [
+              "application/pdf",
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ]
+          },
+          "tamano": {
+            "type": "integer",
+            "description": "Tamaño en bytes.",
+            "minimum": 1,
+            "maximum": 8388608
+          },
+          "subidoEn": {
+            "type": "string",
+            "description": "Fecha de subida.",
+            "format": "date-time",
+            "nullable": false
+          },
+          "almacen": {
+            "type": "string",
+            "description": "Backend.",
+            "enum": [
+              "blob",
+              "memoria"
+            ]
+          },
+          "pathname": {
+            "type": "string",
+            "description": "Ruta registrada."
+          },
+          "url": {
+            "type": "string",
+            "description": "Referencia privada de Blob; null en memoria.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "etiqueta",
+          "nombre",
+          "tipo",
+          "tamano",
+          "subidoEn",
+          "almacen",
+          "pathname",
+          "url"
+        ]
+      },
+      "Cliente": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador opaco del cliente.",
+            "example": "cli_ejemplo01"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoCliente"
+          },
+          "enviadoEn": {
+            "type": "string",
+            "description": "Último envío a revisión; null si no se ha enviado.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "nota": {
+            "type": "string",
+            "description": "Mensaje de revisión visible para el cliente.",
+            "nullable": true
+          },
+          "empresa": {
+            "$ref": "#/components/schemas/Empresa"
+          },
+          "contacto": {
+            "$ref": "#/components/schemas/Contacto"
+          },
+          "titular": {
+            "$ref": "#/components/schemas/Titular"
+          },
+          "cobro": {
+            "$ref": "#/components/schemas/Cobro"
+          },
+          "documentos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentoCliente"
+            }
+          },
+          "limites": {
+            "$ref": "#/components/schemas/LimitesCliente"
+          },
+          "creadoEn": {
+            "type": "string",
+            "description": "Fecha de alta.",
+            "format": "date-time",
+            "nullable": false
+          }
+        },
+        "required": [
+          "id",
+          "estado",
+          "enviadoEn",
+          "empresa",
+          "contacto",
+          "titular",
+          "cobro",
+          "documentos",
+          "limites",
+          "creadoEn"
+        ]
+      },
+      "ClienteAdmin": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador opaco del cliente.",
+            "example": "cli_ejemplo01"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoCliente"
+          },
+          "enviadoEn": {
+            "type": "string",
+            "description": "Último envío a revisión; null si no se ha enviado.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "nota": {
+            "type": "string",
+            "description": "Mensaje de revisión visible para el cliente.",
+            "nullable": true
+          },
+          "empresa": {
+            "$ref": "#/components/schemas/Empresa"
+          },
+          "contacto": {
+            "$ref": "#/components/schemas/Contacto"
+          },
+          "titular": {
+            "$ref": "#/components/schemas/Titular"
+          },
+          "cobro": {
+            "$ref": "#/components/schemas/Cobro"
+          },
+          "documentos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentoAdmin"
+            }
+          },
+          "limites": {
+            "$ref": "#/components/schemas/LimitesCliente"
+          },
+          "creadoEn": {
+            "type": "string",
+            "description": "Fecha de alta.",
+            "format": "date-time",
+            "nullable": false
+          },
+          "condiciones": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "string",
+                "description": "Versión aceptada.",
+                "example": "2026-08"
+              },
+              "aceptadoEn": {
+                "type": "string",
+                "description": "Aceptación.",
+                "format": "date-time",
+                "nullable": false
+              },
+              "ip": {
+                "type": "string",
+                "description": "IP registrada."
+              }
+            },
+            "required": [
+              "version",
+              "aceptadoEn",
+              "ip"
+            ]
+          },
+          "historial": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string",
+                  "description": "Fecha.",
+                  "format": "date-time",
+                  "nullable": false
+                },
+                "por": {
+                  "type": "string",
+                  "description": "Actor."
+                },
+                "accion": {
+                  "type": "string",
+                  "description": "Acción."
+                },
+                "nota": {
+                  "type": "string",
+                  "description": "Nota.",
+                  "nullable": true
+                }
+              },
+              "required": [
+                "at",
+                "por",
+                "accion",
+                "nota"
+              ]
+            }
+          },
+          "actualizadoEn": {
+            "type": "string",
+            "description": "Último guardado.",
+            "format": "date-time",
+            "nullable": false
+          },
+          "credencialesEn": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Marca de cambio de contraseña, cuando exista."
+          },
+          "claveSolicitadaEn": {
+            "type": "string",
+            "description": "Última solicitud de recuperación, si existe.",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "estado",
+          "enviadoEn",
+          "empresa",
+          "contacto",
+          "titular",
+          "cobro",
+          "documentos",
+          "limites",
+          "creadoEn",
+          "condiciones",
+          "historial",
+          "actualizadoEn"
+        ],
+        "description": "Documento administrativo actual sin password. Incluye datos personales y referencias privadas; nunca publicar como API anónima."
+      },
+      "ClienteResumen": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador opaco del cliente.",
+            "example": "cli_ejemplo01"
+          },
+          "razonSocial": {
+            "type": "string",
+            "description": "Razón social."
+          },
+          "nombreComercial": {
+            "type": "string",
+            "description": "Nombre comercial."
+          },
+          "cif": {
+            "type": "string",
+            "description": "CIF."
+          },
+          "poblacion": {
+            "type": "string",
+            "description": "Población."
+          },
+          "email": {
+            "type": "string",
+            "description": "Correo normalizado en minúsculas.",
+            "format": "email",
+            "maxLength": 120,
+            "example": "tienda@example.test"
+          },
+          "telefono": {
+            "type": "string",
+            "description": "Teléfono."
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoCliente"
+          },
+          "enviadoEn": {
+            "type": "string",
+            "description": "Envío a revisión.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "documentos": {
+            "type": "integer",
+            "description": "Número de documentos."
+          },
+          "creadoEn": {
+            "type": "string",
+            "description": "Alta.",
+            "format": "date-time",
+            "nullable": false
+          },
+          "actualizadoEn": {
+            "type": "string",
+            "description": "Actualización.",
+            "format": "date-time",
+            "nullable": false
+          }
+        },
+        "required": [
+          "id",
+          "razonSocial",
+          "nombreComercial",
+          "cif",
+          "poblacion",
+          "email",
+          "telefono",
+          "estado",
+          "enviadoEn",
+          "documentos",
+          "creadoEn",
+          "actualizadoEn"
+        ]
+      },
+      "Clientes": {
+        "type": "object",
+        "properties": {
+          "clientes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClienteResumen"
+            }
+          },
+          "pendientes": {
+            "type": "integer",
+            "description": "Pendientes de todo el índice, antes del filtro por estado."
+          }
+        },
+        "required": [
+          "clientes",
+          "pendientes"
+        ]
+      },
+      "RespuestaCliente": {
+        "type": "object",
+        "properties": {
+          "cliente": {
+            "$ref": "#/components/schemas/Cliente"
+          }
+        },
+        "required": [
+          "cliente"
+        ]
+      },
+      "Cuenta": {
+        "type": "object",
+        "properties": {
+          "cliente": {
+            "$ref": "#/components/schemas/Cliente"
+          },
+          "almacen": {
+            "type": "string",
+            "description": "Disponibilidad de archivos.",
+            "enum": [
+              "blob",
+              "memoria",
+              null
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "cliente",
+          "almacen"
+        ]
+      },
+      "RespuestaClienteAdmin": {
+        "type": "object",
+        "properties": {
+          "cliente": {
+            "$ref": "#/components/schemas/ClienteAdmin"
+          }
+        },
+        "required": [
+          "cliente"
+        ]
+      },
+      "Alta": {
+        "type": "object",
+        "properties": {
+          "accion": {
+            "type": "string",
+            "description": "Acción del recurso.",
+            "enum": [
+              "alta"
+            ]
+          },
+          "empresa": {
+            "$ref": "#/components/schemas/Empresa"
+          },
+          "contacto": {
+            "$ref": "#/components/schemas/Contacto"
+          },
+          "titular": {
+            "$ref": "#/components/schemas/Titular"
+          },
+          "cobro": {
+            "$ref": "#/components/schemas/Cobro"
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña; nunca devuelta salvo la acción local demo.",
+            "format": "password",
+            "minLength": 8,
+            "maxLength": 200,
+            "writeOnly": true
+          },
+          "condiciones": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "accion",
+          "empresa",
+          "contacto",
+          "titular",
+          "cobro",
+          "password",
+          "condiciones"
+        ]
+      },
+      "Entrar": {
+        "type": "object",
+        "properties": {
+          "accion": {
+            "type": "string",
+            "description": "Acción del recurso.",
+            "enum": [
+              "entrar"
+            ]
+          },
+          "email": {
+            "type": "string",
+            "description": "Correo normalizado en minúsculas.",
+            "format": "email",
+            "maxLength": 120,
+            "example": "tienda@example.test"
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña.",
+            "format": "password",
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "accion",
+          "email",
+          "password"
+        ]
+      },
+      "Salir": {
+        "type": "object",
+        "properties": {
+          "accion": {
+            "type": "string",
+            "description": "Acción del recurso.",
+            "enum": [
+              "salir"
+            ]
+          }
+        },
+        "required": [
+          "accion"
+        ]
+      },
+      "EnviarSolicitud": {
+        "type": "object",
+        "properties": {
+          "accion": {
+            "type": "string",
+            "description": "Acción del recurso.",
+            "enum": [
+              "enviar"
+            ]
+          }
+        },
+        "required": [
+          "accion"
+        ]
+      },
+      "Olvide": {
+        "type": "object",
+        "properties": {
+          "accion": {
+            "type": "string",
+            "description": "Acción del recurso.",
+            "enum": [
+              "olvide"
+            ]
+          },
+          "email": {
+            "type": "string",
+            "description": "Correo normalizado en minúsculas.",
+            "format": "email",
+            "maxLength": 120,
+            "example": "tienda@example.test"
+          }
+        },
+        "required": [
+          "accion",
+          "email"
+        ]
+      },
+      "Restablecer": {
+        "type": "object",
+        "properties": {
+          "accion": {
+            "type": "string",
+            "description": "Acción del recurso.",
+            "enum": [
+              "restablecer"
+            ]
+          },
+          "token": {
+            "type": "string",
+            "description": "Código de recuperación: 16 caracteres alfanuméricos, normalmente en cuatro grupos. Ejemplo ficticio.",
+            "example": "2345-6789-ABCD-EFGH"
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña; nunca devuelta salvo la acción local demo.",
+            "format": "password",
+            "minLength": 8,
+            "maxLength": 200,
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "accion",
+          "token",
+          "password"
+        ]
+      },
+      "Demo": {
+        "type": "object",
+        "properties": {
+          "accion": {
+            "type": "string",
+            "description": "Acción del recurso.",
+            "enum": [
+              "demo"
+            ]
+          },
+          "email": {
+            "type": "string",
+            "description": "Correo normalizado en minúsculas.",
+            "format": "email",
+            "maxLength": 120,
+            "example": "tienda@example.test"
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña; nunca devuelta salvo la acción local demo.",
+            "format": "password",
+            "minLength": 8,
+            "maxLength": 200,
+            "writeOnly": true
+          },
+          "razonSocial": {
+            "type": "string",
+            "description": "Razón social sintética opcional."
+          }
+        },
+        "required": [
+          "accion"
+        ],
+        "description": "Solo desarrollo; crea o cambia una cuenta y la aprueba. No usar con Redis compartido o productivo. No abre sesión."
+      },
+      "RespuestaDemo": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Correo normalizado en minúsculas.",
+            "format": "email",
+            "maxLength": 120,
+            "example": "tienda@example.test"
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña de prueba devuelta solo por demo."
+          },
+          "cliente": {
+            "$ref": "#/components/schemas/Cliente"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "cliente"
+        ]
+      },
+      "AprobarCliente": {
+        "type": "object",
+        "properties": {
+          "accion": {
+            "type": "string",
+            "description": "Acción del recurso.",
+            "enum": [
+              "aprobar"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "Identificador opaco del cliente.",
+            "example": "cli_ejemplo01"
+          },
+          "limites": {
+            "$ref": "#/components/schemas/LimitesCliente"
+          }
+        },
+        "required": [
+          "accion",
+          "id"
+        ]
+      },
+      "PedirDocumentacion": {
+        "type": "object",
+        "properties": {
+          "accion": {
+            "type": "string",
+            "description": "Acción del recurso.",
+            "enum": [
+              "documentacion"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "Identificador opaco del cliente.",
+            "example": "cli_ejemplo01"
+          },
+          "nota": {
+            "type": "string",
+            "description": "Motivo visible al cliente.",
+            "minLength": 1,
+            "maxLength": 400
+          },
+          "limites": {
+            "$ref": "#/components/schemas/LimitesCliente"
+          }
+        },
+        "required": [
+          "accion",
+          "id",
+          "nota"
+        ]
+      },
+      "RechazarCliente": {
+        "type": "object",
+        "properties": {
+          "accion": {
+            "type": "string",
+            "description": "Acción del recurso.",
+            "enum": [
+              "rechazar"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "Identificador opaco del cliente.",
+            "example": "cli_ejemplo01"
+          },
+          "nota": {
+            "type": "string",
+            "description": "Motivo visible al cliente.",
+            "minLength": 1,
+            "maxLength": 400
+          },
+          "limites": {
+            "$ref": "#/components/schemas/LimitesCliente"
+          }
+        },
+        "required": [
+          "accion",
+          "id",
+          "nota"
+        ]
+      },
+      "CambiarLimites": {
+        "type": "object",
+        "properties": {
+          "accion": {
+            "type": "string",
+            "description": "Acción del recurso.",
+            "enum": [
+              "limites"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "Identificador opaco del cliente.",
+            "example": "cli_ejemplo01"
+          },
+          "limites": {
+            "$ref": "#/components/schemas/LimitesCliente"
+          }
+        },
+        "required": [
+          "accion",
+          "id",
+          "limites"
+        ],
+        "description": "Debe contener al menos un límite válido; los valores inválidos se omiten. Se usa en el módulo de cierres aplazado."
+      },
+      "GenerarCodigo": {
+        "type": "object",
+        "properties": {
+          "accion": {
+            "type": "string",
+            "description": "Acción del recurso.",
+            "enum": [
+              "clave"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "Identificador opaco del cliente.",
+            "example": "cli_ejemplo01"
+          }
+        },
+        "required": [
+          "accion",
+          "id"
+        ]
+      },
+      "CodigoGenerado": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "description": "Código de recuperación: 16 caracteres alfanuméricos, normalmente en cuatro grupos. Ejemplo ficticio.",
+            "example": "2345-6789-ABCD-EFGH"
+          },
+          "minutos": {
+            "type": "integer",
+            "description": "Vigencia.",
+            "enum": [
+              60
+            ]
+          }
+        },
+        "required": [
+          "codigo",
+          "minutos"
+        ]
+      },
+      "ConfirmarDocumento": {
+        "type": "object",
+        "properties": {
+          "accion": {
+            "type": "string",
+            "description": "Acción del recurso.",
+            "enum": [
+              "confirmar"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "description": "URL privada devuelta por Blob.",
+            "format": "uri"
+          },
+          "pathname": {
+            "type": "string",
+            "description": "Ruta devuelta por Blob dentro de clientes/{id}/."
+          },
+          "nombre": {
+            "type": "string",
+            "description": "Nombre; por defecto documento.",
+            "maxLength": 120
+          },
+          "etiqueta": {
+            "type": "string",
+            "description": "Etiqueta opcional.",
+            "maxLength": 40
+          }
+        },
+        "required": [
+          "accion",
+          "url",
+          "pathname"
+        ]
+      },
+      "DocumentoLocal": {
+        "type": "object",
+        "properties": {
+          "accion": {
+            "type": "string",
+            "description": "Acción del recurso.",
+            "enum": [
+              "local"
+            ]
+          },
+          "base64": {
+            "type": "string",
+            "description": "Archivo codificado en base64; bytes decodificados <= 2,5 MiB.",
+            "format": "byte"
+          },
+          "tipo": {
+            "type": "string",
+            "description": "Tipo admitido.",
+            "enum": [
+              "application/pdf",
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ]
+          },
+          "nombre": {
+            "type": "string",
+            "description": "Nombre opcional.",
+            "maxLength": 120
+          },
+          "etiqueta": {
+            "type": "string",
+            "description": "Etiqueta opcional.",
+            "maxLength": 40
+          }
+        },
+        "required": [
+          "accion",
+          "base64"
+        ],
+        "description": "Solo con modo de documentos memoria; no es multipart/form-data."
+      },
+      "EtiquetarDocumento": {
+        "type": "object",
+        "properties": {
+          "accion": {
+            "type": "string",
+            "description": "Acción del recurso.",
+            "enum": [
+              "etiqueta"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "Identificador opaco del documento.",
+            "example": "doc_ejemplo1"
+          },
+          "etiqueta": {
+            "type": "string",
+            "description": "Si está vacía se recupera el nombre del documento.",
+            "maxLength": 40
+          }
+        },
+        "required": [
+          "accion",
+          "id"
+        ]
+      },
+      "BorrarDocumento": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador opaco del documento.",
+            "example": "doc_ejemplo1"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "BlobToken": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Evento del SDK.",
+            "enum": [
+              "blob.generate-client-token"
+            ]
+          },
+          "payload": {
+            "type": "object",
+            "properties": {
+              "pathname": {
+                "type": "string",
+                "description": "Debe empezar por clientes/{id}/."
+              },
+              "multipart": {
+                "type": "boolean"
+              },
+              "clientPayload": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "required": [
+              "pathname",
+              "multipart",
+              "clientPayload"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "payload"
+        ],
+        "description": "Protocolo de @vercel/blob 2.8.0. El SDK gestiona estos mensajes; no subir bytes del archivo a esta operación."
+      },
+      "BlobUploaded": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Evento del SDK.",
+            "enum": [
+              "blob.upload-completed"
+            ]
+          },
+          "payload": {
+            "type": "object",
+            "properties": {
+              "blob": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "URL del objeto."
+                  },
+                  "downloadUrl": {
+                    "type": "string",
+                    "description": "URL de descarga."
+                  },
+                  "pathname": {
+                    "type": "string",
+                    "description": "Ruta."
+                  },
+                  "contentType": {
+                    "type": "string",
+                    "description": "Tipo."
+                  },
+                  "contentDisposition": {
+                    "type": "string",
+                    "description": "Disposición."
+                  }
+                },
+                "required": [
+                  "url",
+                  "downloadUrl",
+                  "pathname",
+                  "contentType",
+                  "contentDisposition"
+                ]
+              },
+              "tokenPayload": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "required": [
+              "blob"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "payload"
+        ],
+        "description": "Evento interno del SDK. Este handler exige además cookie de cliente y Origin antes de delegar, por lo que no equivale a un webhook público de Blob."
+      },
+      "BlobTokenRespuesta": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Evento.",
+            "enum": [
+              "blob.generate-client-token"
+            ]
+          },
+          "clientToken": {
+            "type": "string",
+            "description": "Token efímero; no registrar ni compartir."
+          }
+        },
+        "required": [
+          "type",
+          "clientToken"
+        ]
+      },
+      "BlobUploadedRespuesta": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Evento.",
+            "enum": [
+              "blob.upload-completed"
+            ]
+          },
+          "response": {
+            "type": "string",
+            "description": "Acuse del SDK.",
+            "enum": [
+              "ok"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "response"
+        ]
+      }
+    }
+  },
+  "x-documentation": {
+    "profile": "current-release",
+    "status": "reviewed",
+    "pendingReview": [],
+    "sourceHash": "197b1569eda7f73fc69396c2016c3b49e207f2ec80a28be18f60e7a8d27b8e74",
+    "projectHash": "c95cba684241d1a3c5ef2d480f642754bcfd1513f21986704995c5fff5d537e2",
+    "inventory": {
+      "/api/admin/clientes": {
+        "file": "api/admin/clientes.js",
+        "methods": [
+          "get",
+          "put"
+        ],
+        "actions": [
+          "aprobar",
+          "clave",
+          "documentacion",
+          "limites",
+          "rechazar"
+        ],
+        "statuses": [
+          "200",
+          "400",
+          "403",
+          "404",
+          "422"
+        ]
+      },
+      "/api/admin/formulas": {
+        "file": "api/admin/formulas.js",
+        "methods": [
+          "get",
+          "put"
+        ],
+        "actions": [],
+        "statuses": [
+          "200",
+          "400",
+          "403",
+          "409",
+          "422",
+          "500",
+          "503"
+        ]
+      },
+      "/api/admin/history": {
+        "file": "api/admin/history.js",
+        "methods": [
+          "get"
+        ],
+        "actions": [],
+        "statuses": [
+          "200"
+        ]
+      },
+      "/api/admin/login": {
+        "file": "api/admin/login.js",
+        "methods": [
+          "post"
+        ],
+        "actions": [],
+        "statuses": [
+          "200",
+          "400",
+          "401",
+          "403",
+          "429",
+          "503"
+        ]
+      },
+      "/api/admin/logout": {
+        "file": "api/admin/logout.js",
+        "methods": [
+          "post"
+        ],
+        "actions": [],
+        "statuses": [
+          "200",
+          "403"
+        ]
+      },
+      "/api/admin/scenarios": {
+        "file": "api/admin/scenarios.js",
+        "methods": [
+          "delete",
+          "get",
+          "put"
+        ],
+        "actions": [],
+        "statuses": [
+          "200",
+          "400",
+          "403",
+          "422",
+          "500",
+          "503"
+        ]
+      },
+      "/api/admin/series": {
+        "file": "api/admin/series.js",
+        "methods": [
+          "get"
+        ],
+        "actions": [],
+        "statuses": [
+          "200"
+        ]
+      },
+      "/api/admin/session": {
+        "file": "api/admin/session.js",
+        "methods": [
+          "get"
+        ],
+        "actions": [],
+        "statuses": [
+          "200"
+        ]
+      },
+      "/api/cierres": {
+        "file": "api/cierres.js",
+        "methods": [
+          "delete",
+          "get",
+          "post",
+          "put"
+        ],
+        "actions": [
+          "ajustar",
+          "confirmar",
+          "rechazar"
+        ],
+        "statuses": [
+          "200",
+          "201",
+          "400",
+          "401",
+          "403",
+          "404",
+          "409",
+          "422",
+          "429",
+          "503"
+        ]
+      },
+      "/api/portal/cuenta": {
+        "file": "api/portal/cuenta.js",
+        "methods": [
+          "get",
+          "post"
+        ],
+        "actions": [
+          "alta",
+          "demo",
+          "entrar",
+          "enviar",
+          "olvide",
+          "restablecer",
+          "salir"
+        ],
+        "statuses": [
+          "200",
+          "201",
+          "400",
+          "401",
+          "403",
+          "404",
+          "409",
+          "422",
+          "429",
+          "503"
+        ]
+      },
+      "/api/portal/documentos": {
+        "file": "api/portal/documentos.js",
+        "methods": [
+          "delete",
+          "post"
+        ],
+        "actions": [
+          "confirmar",
+          "etiqueta",
+          "local"
+        ],
+        "statuses": [
+          "200",
+          "400",
+          "401",
+          "403",
+          "404",
+          "409",
+          "422",
+          "501"
+        ]
+      },
+      "/api/prices": {
+        "file": "api/prices.js",
+        "methods": [
+          "get",
+          "head"
+        ],
+        "actions": [],
+        "statuses": [
+          "200",
+          "503"
+        ]
+      }
+    },
+    "automation": "Regenerado desde contratos versionados. Cambios en código protegido requieren revisar y registrar el contrato; no se infieren reglas de negocio."
+  },
+  "x-release-scope": {
+    "deferred": [
+      "cierres"
+    ],
+    "enforcedByDocumentation": false
+  }
+}
