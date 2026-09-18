@@ -7,6 +7,12 @@ try {
     const pending = docs.complete['x-documentation'].pendingReview.length
     console.log(`[docs] OpenAPI regenerado${pending ? `; ${pending} fuentes pendientes de revisión` : '; contrato revisado'}.`)
   } else if (command === 'check') {
+    // Vercel altera vercel.json al preparar el build y la huella deja de
+    // coincidir. El CI de GitHub ya hace esta comprobación en cada push.
+    if (process.env.VERCEL) {
+      console.log('[docs] Comprobación omitida en Vercel: la hace el CI.')
+      process.exit(0)
+    }
     const result = await validateDocuments(await documents())
     console.log(`[docs] Válido: ${result.routes} rutas, ${result.operations} operaciones; ejemplos, cobertura y revisión sincronizados.`)
   } else if (command === 'review') {
