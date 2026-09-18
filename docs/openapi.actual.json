@@ -4938,8 +4938,8 @@
     "profile": "current-release",
     "status": "reviewed",
     "pendingReview": [],
-    "sourceHash": "197b1569eda7f73fc69396c2016c3b49e207f2ec80a28be18f60e7a8d27b8e74",
-    "projectHash": "c95cba684241d1a3c5ef2d480f642754bcfd1513f21986704995c5fff5d537e2",
+    "sourceHash": "8361ea486e5c037411cc5bd7c32d22ff0af2cf2f60ca85b08bbf51c3946f0b74",
+    "projectHash": "35d3f004dea3813928988261ee5f5f0d8b1446aff575e3681e8f4ffdde8ab7a1",
     "inventory": {
       "/api/admin/clientes": {
         "file": "api/admin/clientes.js",

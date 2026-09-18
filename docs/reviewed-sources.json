@@ -31,7 +31,7 @@
     "package.json": "b62c7eb30598059254cd728280fed74258d1e004e2e4eb1ace7b21b1d36e0809",
     "src/admin/api.js": "6fac1085c9bd4bd2b0950690570364dbf733d1e457d5bd3e80492358336e1f7b",
     "src/portal/api.js": "99712d2b5bdff77e91308d2e4c2ff939e01a1548c33cc54fd3b8125c8dc81ac5",
-    "vercel.json": "8daff3ed91b9b06db35b188212c8d27155cdc5821b4403c13a0428bf8b4d438f",
+    "vercel.json": "e54f1b16de427a3ae3b1b95880c9b96b5f55832ea8d715b6d5fea6d3d725ccb9",
     "vite.config.js": "58f286bbbc35452ea3b34d98e19e22815b9765d311cfc6aa9d1021bea1bf144c"
   }
 }
