@@ -126,7 +126,7 @@ export default function PriceTable({ metalData }) {
               <GradeTable
                 grades={grades}
                 dailyChange={tab === 'gold' ? change.gold : change.silver}
-                decimals={tab === 'gold' ? 2 : 3}
+                decimals={2}
               />
             )}
           </div>

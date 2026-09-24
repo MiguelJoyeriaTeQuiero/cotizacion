@@ -101,7 +101,7 @@ export default function PriceCard({ metalData }) {
             Plata 1000‰
           </div>
           <div className="price-sec-value">
-            {silver1000 != null ? `€${silver1000.toFixed(3)}` : '—'}
+            {silver1000 != null ? `€${silver1000.toFixed(2)}` : '—'}
           </div>
           {silver1000 != null && (
             <div className="price-sec-change" style={{ color: dailyChangeSilver >= 0 ? '#16A34A' : '#DC2626' }}>

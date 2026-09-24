@@ -3,13 +3,13 @@ import { useConsent, saveConsent } from '../cookieConsent'
 
 const CONFIGS = {
   gold: {
-    symbols: [['OANDA:XAUEUR|1D']],
+    symbols: [['OANDA:XAUEUR|1M']],
     lineColor: '#C9A55A',
     topColor: 'rgba(201,165,90,0.18)',
     bottomColor: 'rgba(201,165,90,0)',
   },
   silver: {
-    symbols: [['OANDA:XAGEUR|1D']],
+    symbols: [['OANDA:XAGEUR|1M']],
     lineColor: '#7A9BAD',
     topColor: 'rgba(122,155,173,0.18)',
     bottomColor: 'rgba(122,155,173,0)',
