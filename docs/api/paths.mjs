@@ -40,7 +40,7 @@ export const paths = {
   '/api/prices': {
     get: operation('prices', 'Precios públicos', 'consultarPrecios', 'Cotización y precios por ley', [], {
       description: 'Devuelve EUR/oz y EUR/g ya calculados, sin f1/f2/f3. Consulta GoldAPI si la caché ha vencido. En caída entrega el último dato o fixing de emergencia con stale=true. Puede responder 200 con respaldo; comprobar stale y fetchedAt. Registra muestras cuando el mercado está vigente. Los precios públicos no están vinculados a una reserva de cierre.',
-      responses: { 200: response('Precios calculados.', ref('Precios'), { vigente: example('Datos ficticios vigentes', precios), retrasado: example('Último dato conocido', { ...precios, stale: true }) }, { 'Cache-Control': { schema: { type: 'string' }, example: 'public, s-maxage=30, stale-while-revalidate=300' } }), ...errors(405, 503) },
+      responses: { 200: response('Precios calculados.', ref('Precios'), { vigente: example('Datos ficticios vigentes', precios), retrasado: example('Último dato conocido', { ...precios, stale: true }) }, { 'Cache-Control': { schema: { type: 'string' }, example: 'public, s-maxage=30, stale-while-revalidate=30' } }), ...errors(405, 503) },
       ...known('INT-05', 'INT-08', 'ARQ-02'),
     }),
     head: operation('prices', 'Precios públicos', 'cabecerasPrecios', 'Cabeceras de la cotización', [], {

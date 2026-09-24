@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { upload } from '@vercel/blob/client'
 import { api, SinSesion } from './api'
 import { Cierres } from './Cierre'
+import { usePrecios as useTarifa } from './usePrecios'
 
 // Portal de clientes de Te Quiero Metales.
 //
@@ -108,8 +109,7 @@ function leerBase64(file) {
 // ─── Cabecera ────────────────────────────────────────────────────────────────
 
 function Cabecera({ cliente, onSalir }) {
-  const [market, setMarket] = useState(null)
-  useEffect(() => { api.precios().then(setMarket).catch(() => {}) }, [])
+  const market = usePrecios()
 
   return (
     <header className="ptop">
@@ -158,9 +158,7 @@ function Campo({ id, etiqueta, ayuda, valor, onChange, ancho = '', ...props }) {
 // acceso va al lado, no en medio de un vacío.
 
 function usePrecios() {
-  const [market, setMarket] = useState(null)
-  useEffect(() => { api.precios().then(setMarket).catch(() => {}) }, [])
-  return market
+  return useTarifa().precios
 }
 
 function PrecioDelDia({ market, compacto = false }) {

@@ -26,7 +26,7 @@
     "api/cierres.js": "c1f9adb86e8c1ba9b15e856bdb2edb76100278686cb3e21206eb58a1af89d6c2",
     "api/portal/cuenta.js": "897826745e49b2f8bcd66ffb14cf9edf0ecf009e562923735680d71effe75d3f",
     "api/portal/documentos.js": "c5c342ea0222c854cb40650f65e23cb7ba663a5f38ea0e27b77f2bb57dac9d35",
-    "api/prices.js": "0db8a181bfdebcd9ea11a3ff0476aca2569e05bb8ab30fd1d76e49056ae3e686",
+    "api/prices.js": "8cb8adc2ff75f1c2a3f63abe7148875b3b763245a7678209841f1f4c6552c5d1",
     "package-lock.json": "b7f3b81cd007547154838f6b22ca501a80d08713de921d3f9deea1eac4f13696",
     "package.json": "b62c7eb30598059254cd728280fed74258d1e004e2e4eb1ace7b21b1d36e0809",
     "src/admin/api.js": "6fac1085c9bd4bd2b0950690570364dbf733d1e457d5bd3e80492358336e1f7b",

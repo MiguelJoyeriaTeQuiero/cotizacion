@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api } from './api'
+import { usePrecios } from './usePrecios'
 
 // La pantalla donde el cliente monta el lote y pide el cierre.
 //
@@ -238,7 +239,6 @@ function Cierre({ cierre, onAnular, onError }) {
 // ─── Pantalla ────────────────────────────────────────────────────────────────
 
 export function Cierres({ onError }) {
-  const [precios, setPrecios] = useState(null)
   const [cantidades, setCantidades] = useState({})
   const [metalId, setMetalId] = useState('gold')
   const [etapa, setEtapa] = useState(1)
@@ -253,10 +253,13 @@ export function Cierres({ onError }) {
     return () => clearInterval(t)
   }, [])
 
+  // La tarifa se refresca sola (ver usePrecios): un cambio de fórmulas en el
+  // panel llega a esta tabla sin que el cliente tenga que recargar.
+  const { precios, recargar: recargarPrecios } = usePrecios({ onError })
+
   const cargar = useCallback(async () => {
     try {
-      const [tarifa, mios] = await Promise.all([api.precios(), api.cierres()])
-      setPrecios(tarifa)
+      const mios = await api.cierres()
       setCierres(mios.cierres || [])
     } catch (err) {
       onError(err.message)
@@ -332,7 +335,7 @@ export function Cierres({ onError }) {
       setUltimo(data.cierre)
       setCantidades({})
       setEtapa(1)
-      await cargar()
+      await Promise.all([cargar(), recargarPrecios()])
     } catch (err) {
       onError(err.message)
     } finally {

@@ -132,7 +132,7 @@
                 "schema": {
                   "type": "string"
                 },
-                "example": "public, s-maxage=30, stale-while-revalidate=300"
+                "example": "public, s-maxage=30, stale-while-revalidate=30"
               }
             }
           },
@@ -4938,8 +4938,8 @@
     "profile": "current-release",
     "status": "reviewed",
     "pendingReview": [],
-    "sourceHash": "8361ea486e5c037411cc5bd7c32d22ff0af2cf2f60ca85b08bbf51c3946f0b74",
-    "projectHash": "35d3f004dea3813928988261ee5f5f0d8b1446aff575e3681e8f4ffdde8ab7a1",
+    "sourceHash": "fc5bd6be8a20caca45c9650efa1a7e800ccec58b22db91f90c58016bb50e6583",
+    "projectHash": "f14bcde7816e72bfc2cc9068b56f24caff896048b96365ced765c9b713bfc474",
     "inventory": {
       "/api/admin/clientes": {
         "file": "api/admin/clientes.js",

@@ -19,6 +19,12 @@ import { gradePrice, refreshSecondsOf } from './_lib/defaults.js'
 // llamadas a la API, porque entre medias responde la caché de Redis.
 const CDN_MAX_AGE = 30
 
+// Margen en el que la CDN puede servir la respuesta caducada mientras la
+// renueva por detrás. Corto por la misma razón: con 300 s, la primera visita
+// tras un rato sin tráfico recibía una tarifa de hasta cinco minutos, y un
+// cambio de fórmulas recién publicado no aparecía en la tabla del cliente.
+const CDN_STALE = 30
+
 // Las muestras guardadas no necesitan más precisión que la que se publica.
 const round4 = (n) => Math.round(n * 10000) / 10000
 
@@ -73,7 +79,7 @@ export default async function handler(req, res) {
       {
         // La CDN de Vercel sirve la misma respuesta durante unos segundos: una
         // subida de tráfico no se traduce en llamadas extra a la API de mercado.
-        'Cache-Control': `public, s-maxage=${CDN_MAX_AGE}, stale-while-revalidate=300`,
+        'Cache-Control': `public, s-maxage=${CDN_MAX_AGE}, stale-while-revalidate=${CDN_STALE}`,
       }
     )
   } catch (err) {
