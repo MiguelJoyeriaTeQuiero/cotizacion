@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import TopBar from './components/TopBar'
 import NavBar from './components/NavBar'
 import Hero from './components/Hero'
+import JewelryBand from './components/JewelryBand'
 import Stats from './components/Stats'
 import Services from './components/Services'
 import HowItWorks from './components/HowItWorks'
@@ -136,6 +137,7 @@ export default function App() {
       <TopBar />
       <NavBar scrolled={navScrolled} />
       <Hero metalData={metalData} />
+      <JewelryBand />
       <PriceTable metalData={metalData} />
       <Stats />
       <Services />

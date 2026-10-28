@@ -2,6 +2,8 @@ import { useState } from 'react'
 
 const links = [
   { href: '#precios', label: 'Precio del oro' },
+  // Destacado: es el servicio que los clientes no saben que existe.
+  { href: '#joyas', label: 'Joyas al mayor', className: 'nav-joyas' },
   { href: '#servicios', label: 'Servicios' },
   { href: '#como-funciona', label: 'Cómo funciona' },
   { href: '#quienes-somos', label: 'Quiénes somos' },
@@ -24,7 +26,7 @@ export default function NavBar({ scrolled }) {
           {/* Desktop links */}
           <div className="nav-links">
             {links.map(l => (
-              <a key={l.href} href={l.href}>{l.label}</a>
+              <a key={l.href} href={l.href} className={l.className}>{l.label}</a>
             ))}
             <a href="#contacto" className="nav-cta">Consultar</a>
           </div>
@@ -43,7 +45,7 @@ export default function NavBar({ scrolled }) {
       {/* Mobile overlay */}
       <div className={`nav-mobile${open ? ' open' : ''}`}>
         {links.map(l => (
-          <a key={l.href} href={l.href} onClick={close}>{l.label}</a>
+          <a key={l.href} href={l.href} className={l.className} onClick={close}>{l.label}</a>
         ))}
         <a href="#contacto" className="mobile-cta" onClick={close}>Consultar ahora</a>
       </div>
