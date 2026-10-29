@@ -1,28 +1,16 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useRefresco } from '../shared/refresco'
 
 // Los precios y las leyes llegan ya calculados desde /api/prices, que es la
-// fuente de verdad y lo que el panel de administración modifica.
+// fuente de verdad y lo que el panel de administración modifica. Se vuelven a
+// pedir en cuanto caduca la cotización (ver shared/refresco.js), y lo que se
+// enseña es siempre el precio del servidor, sin adornos.
 //
 // Si esa llamada no está disponible (sin backend, caída de red, `npm run dev`
 // a secas), la tabla NO se queda vacía: se calcula en el navegador con los
 // valores de respaldo de abajo, exactamente como funcionaba la web antes.
 
-const TICK_MS = 4000
 const SPARK_POINTS = 20
-
-// El navegador vuelve a pedir /api/prices al ritmo que marque el panel, pero
-// acotado: ni tan seguido que sobre, ni tan espaciado que una pestaña abierta
-// se quede con precios de hace horas. Pedirlo no consume cuota de la API de
-// mercado: entre consultas responde la caché del servidor.
-const POLL_MIN_MS = 30_000
-const POLL_MAX_MS = 600_000
-const POLL_FALLBACK_MS = 60_000
-
-function pollInterval(refreshSeconds) {
-  const ms = Number(refreshSeconds) * 1000
-  if (!Number.isFinite(ms) || ms <= 0) return POLL_FALLBACK_MS
-  return Math.min(POLL_MAX_MS, Math.max(POLL_MIN_MS, ms))
-}
 
 // ─── Respaldo ────────────────────────────────────────────────────────────────
 // Copia de los valores publicados. En cuanto /api/prices responde, estos datos
@@ -80,8 +68,8 @@ function timeoutSignal(ms) {
 export function useMetalPrices() {
   // Se arranca con el respaldo, así la tabla nunca aparece vacía ni parpadea.
   const [data, setData] = useState(buildFallback)
-  const [drift, setDrift] = useState({ gold: 1, silver: 1 })
   const [meta, setMeta] = useState({ lastFetch: null, loading: false, error: null })
+  const [ronda, setRonda] = useState(0)
   const [sparklineGold, setSparklineGold] = useState([])
 
   const fetchPrices = useCallback(async () => {
@@ -97,45 +85,26 @@ export function useMetalPrices() {
       }
 
       setData(payload)
-      setDrift({ gold: 1, silver: 1 }) // el dato real sustituye a la simulación
-      setMeta({ lastFetch: new Date(), loading: false, error: null })
+      // La hora de la cotización y no la de esta petición: es la que dice lo
+      // reciente que es de verdad el precio.
+      const at = typeof payload.fetchedAt === 'number' ? new Date(payload.fetchedAt) : new Date()
+      setMeta({ lastFetch: at, loading: false, error: null })
     } catch (err) {
       // Se mantiene lo último bueno (o el respaldo inicial): la tabla sigue
       // mostrando precios en lugar de quedarse en blanco.
       console.warn('[useMetalPrices] no se ha podido actualizar →', err.message)
       setMeta(prev => ({ ...prev, lastFetch: prev.lastFetch ?? new Date(), loading: false }))
+    } finally {
+      setRonda(n => n + 1)
     }
   }, [])
 
-  // El intervalo se reajusta solo cuando el panel cambia la frecuencia: la
-  // primera respuesta ya trae el valor vigente.
-  const pollMs = pollInterval(data?.refreshSeconds)
-
   useEffect(() => { fetchPrices() }, [fetchPrices])
 
-  // El temporizador se rearma solo si cambia la cadencia, para no disparar una
-  // petición de más al recibir la primera respuesta.
-  useEffect(() => {
-    const id = setInterval(fetchPrices, pollMs)
-    return () => clearInterval(id)
-  }, [fetchPrices, pollMs])
-
-  // Micro-oscilación entre llamadas para que la cotización se vea viva.
-  // Solo mueve un multiplicador; el precio base siempre es el del servidor.
-  useEffect(() => {
-    if (!data) return
-    const jitter = () => 1 + (Math.random() - 0.496) * 0.0005
-    const id = setInterval(() => {
-      setDrift(d => ({
-        gold: clampDrift(d.gold * jitter()),
-        silver: clampDrift(d.silver * jitter()),
-      }))
-    }, TICK_MS)
-    return () => clearInterval(id)
-  }, [data])
+  useRefresco(fetchPrices, data, ronda)
 
   // El sparkline sigue al oro: se siembra con la primera respuesta y a partir
-  // de ahí avanza un punto en cada actualización o micro-oscilación.
+  // de ahí avanza un punto con cada tarifa recibida.
   useEffect(() => {
     const base = data?.gold?.[0]?.pricePerGram
     if (typeof base !== 'number') return
@@ -145,29 +114,19 @@ export function useMetalPrices() {
           base * (1 + (i - SPARK_POINTS + 1) * 0.00015)
         )
       }
-      return [...prev.slice(1), base * drift.gold]
+      return [...prev.slice(1), base]
     })
-  }, [data, drift.gold])
+  }, [data])
 
-  const value = useMemo(() => {
-    const scale = (grades, factor) =>
-      (grades || []).map(g => ({ ...g, pricePerGram: g.pricePerGram * factor }))
-
-    return {
-      fixing: { gold: data.fixing.gold * drift.gold, silver: data.fixing.silver * drift.silver },
-      change: data.change || { gold: 0, silver: 0 },
-      gold: scale(data.gold, drift.gold),
-      silver: scale(data.silver, drift.silver),
-      lastFetch: meta.lastFetch,
-      loading: meta.loading,
-      sparklineGold,
-    }
-  }, [data, drift, meta, sparklineGold])
+  const value = useMemo(() => ({
+    fixing: data.fixing,
+    change: data.change || { gold: 0, silver: 0 },
+    gold: data.gold || [],
+    silver: data.silver || [],
+    lastFetch: meta.lastFetch,
+    loading: meta.loading,
+    sparklineGold,
+  }), [data, meta, sparklineGold])
 
   return value
-}
-
-// Impide que la simulación se aleje del precio real más de un 0,5 %.
-function clampDrift(value) {
-  return Math.min(1.005, Math.max(0.995, value))
 }

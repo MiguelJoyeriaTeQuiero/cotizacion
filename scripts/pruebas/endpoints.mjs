@@ -680,6 +680,59 @@ process.env.ADMIN_USERS = '[]' // se retira la cuenta
 r = await call(session, { method: 'GET', cookie: cookie2 })
 check('quitar la cuenta corta la sesión abierta al instante', r.statusCode === 401, r.statusCode)
 
+// ─── 16. La consulta al mercado: un turno, espera tras un fallo y CDN ────────
+// GoldAPI se sustituye por un doble que cuenta las llamadas; el resto de
+// peticiones (el Redis simulado) siguen su camino.
+store.clear(); expiry.clear()
+const { resolveMarket } = await import(`${BASE}/_lib/market.js`)
+const fetchReal = globalThis.fetch
+let llamadasMercado = 0
+let mercadoCaido = false
+globalThis.fetch = async (url, options) => {
+  if (!String(url).startsWith('https://www.goldapi.io/')) return fetchReal(url, options)
+  llamadasMercado++
+  await new Promise(r => setTimeout(r, 30))
+  if (mercadoCaido) return new Response('{}', { status: 500 })
+  return new Response(JSON.stringify({ price: 3500, chp: 0.4 }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+}
+process.env.GOLDAPI_KEY = 'clave-de-prueba'
+const vencida = () => setMarketCache({ fixing: { gold: 3400, silver: 34 }, change: { gold: 0, silver: 0 }, fetchedAt: Date.now() - 120_000 })
+
+await vencida()
+const aLaVez = await Promise.all([resolveMarket(60), resolveMarket(60), resolveMarket(60)])
+check('tres peticiones a la vez consultan el mercado una sola vez (oro y plata)', llamadasMercado === 2, llamadasMercado)
+check('la que se lleva el turno trae la cotización nueva', aLaVez.filter(m => m.fixing.gold === 3500 && !m.stale).length === 1, JSON.stringify(aLaVez.map(m => [m.fixing.gold, m.stale])))
+check('las demás sirven la vieja, marcada como retrasada', aLaVez.filter(m => m.fixing.gold === 3400 && m.stale).length === 2, JSON.stringify(aLaVez.map(m => [m.fixing.gold, m.stale])))
+const despues = await resolveMarket(60)
+check('después responde la caché, sin volver a consultar', llamadasMercado === 2 && despues.fixing.gold === 3500 && !despues.stale, `${llamadasMercado} ${JSON.stringify(despues.fixing)}`)
+
+await vencida()
+mercadoCaido = true
+llamadasMercado = 0
+const fallo = await resolveMarket(60)
+check('si el mercado falla, último dato retrasado', fallo.stale && fallo.fixing.gold === 3400, JSON.stringify(fallo))
+const trasFallo = await resolveMarket(60)
+check('tras un fallo no se reintenta en la petición siguiente', llamadasMercado === 2 && trasFallo.stale, llamadasMercado)
+
+r = await call(prices, { method: 'GET', origin: null })
+let cacheCdn = String(r.getHeader('cache-control'))
+check('con el dato retrasado la CDN lo guarda solo 5 s', /s-maxage=5\b/.test(cacheCdn), cacheCdn)
+
+mercadoCaido = false
+await setMarketCache({ fixing: { gold: 3500, silver: 35 }, change: { gold: 0, silver: 0 }, fetchedAt: Date.now() - 48_000 })
+r = await call(prices, { method: 'GET', origin: null })
+cacheCdn = String(r.getHeader('cache-control'))
+const sMaxAge = Number(/s-maxage=(\d+)/.exec(cacheCdn)?.[1])
+check('la CDN guarda la respuesta lo que le queda a la cotización', r.body.stale === false && sMaxAge >= 11 && sMaxAge <= 12, cacheCdn)
+check('sin stale-while-revalidate: la CDN no sirve una cotización ya renovada', !cacheCdn.includes('stale-while-revalidate'), cacheCdn)
+
+await setMarketCache({ fixing: { gold: 3500, silver: 35 }, change: { gold: 0, silver: 0 }, fetchedAt: Date.now() })
+r = await call(prices, { method: 'GET', origin: null })
+check('con la cotización recién consultada, el tope de 30 s', /s-maxage=30\b/.test(String(r.getHeader('cache-control'))), r.getHeader('cache-control'))
+
+globalThis.fetch = fetchReal
+delete process.env.GOLDAPI_KEY
+
 server.close()
 console.log(fails === 0 ? '\nTodas las comprobaciones de extremo a extremo pasan.' : `\n${fails} COMPROBACIONES FALLIDAS`)
 process.exit(fails === 0 ? 0 : 1)

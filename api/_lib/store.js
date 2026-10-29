@@ -102,6 +102,7 @@ const K = {
   formulas: 'tqm:formulas',
   history: 'tqm:formulas:history',
   prices: 'tqm:prices:cache',
+  pricesLock: 'tqm:prices:lock',
   series: 'tqm:prices:series',
   scenarios: 'tqm:formulas:scenarios',
   session: (hash) => `tqm:session:${hash}`,
@@ -204,6 +205,35 @@ export async function setMarketCache(payload) {
     await redis().set(K.prices, payload)
   } catch (err) {
     console.error('[store] setMarketCache →', err.message)
+  }
+}
+
+// ─── Turno para consultar el mercado ─────────────────────────────────────────
+//
+// Cuando caduca la cotización pueden llegar varias peticiones en el mismo
+// segundo: todas las pestañas abiertas preguntan justo entonces. Solo la que se
+// lleva el turno consulta el mercado; las demás sirven lo que hay. El turno
+// caduca solo: si la consulta sale bien se suelta enseguida, y si falla se deja
+// puesto, que es lo que hace esperar antes del siguiente intento.
+
+/** Cierto si esta petición se queda el turno durante `seconds` segundos. */
+export async function claimMarketFetch(seconds) {
+  if (!hasStorage()) return true
+  try {
+    return (await redis().set(K.pricesLock, Date.now(), { nx: true, ex: seconds })) === 'OK'
+  } catch (err) {
+    // Sin almacén no hay con quién coordinarse: mejor consultar que no hacerlo.
+    console.warn('[store] claimMarketFetch →', err.message)
+    return true
+  }
+}
+
+export async function releaseMarketFetch() {
+  if (!hasStorage()) return
+  try {
+    await redis().del(K.pricesLock)
+  } catch {
+    /* caduca solo */
   }
 }
 

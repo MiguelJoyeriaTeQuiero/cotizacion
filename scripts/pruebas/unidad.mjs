@@ -2,6 +2,7 @@ import { hashPassword, verifyPassword, checkPassword, burnPasswordTime } from '.
 import { validateFormulas } from '../../api/_lib/validate.js'
 import { DEFAULT_FORMULAS, gradePrice, refreshSecondsOf } from '../../api/_lib/defaults.js'
 import { parsearLote } from '../../src/shared/lote.js'
+import { esperaRefresco } from '../../src/shared/refresco.js'
 
 let fails = 0
 const check = (name, cond) => {
@@ -160,6 +161,21 @@ for (const g of [...DEFAULT_FORMULAS.gold, ...DEFAULT_FORMULAS.silver]) {
 check('los precios coinciden exactamente con la fórmula anterior', sameMath)
 console.log('\n  Oro 24k @ fixing 3082 €/oz →', gradePrice(3082, DEFAULT_FORMULAS.gold[0], 31.1).toFixed(2), '€/g')
 console.log('  Plata 925 @ fixing 29,92 €/oz →', gradePrice(29.92, DEFAULT_FORMULAS.silver[1], 31.1).toFixed(3), '€/g')
+
+// ── Cuándo vuelve a pedir la tarifa el navegador ──
+// Una cotización de las 10:00:00 con frecuencia de un minuto caduca a las 10:01:00.
+const consulta = Date.UTC(2026, 9, 29, 10, 0, 0)
+const vigente = { fetchedAt: consulta, refreshSeconds: 60, stale: false }
+check('pide justo después de que caduque la cotización, con 2 s de margen',
+  esperaRefresco(vigente, consulta + 20_000, 0) === 42_000)
+check('el reparto al azar añade como mucho 3 s', esperaRefresco(vigente, consulta + 20_000, 1) === 45_000)
+check('si llega ya caducada, vuelve a mirar a los 5 s', esperaRefresco(vigente, consulta + 90_000, 0) === 5_000)
+check('con el dato retrasado pregunta cada periodo', esperaRefresco({ ...vigente, stale: true }, consulta + 20_000, 0) === 60_000)
+check('sin hora de consulta, también cada periodo', esperaRefresco({ ...vigente, fetchedAt: null }, consulta, 0) === 60_000)
+check('con una frecuencia de horas no espera más de 10 min',
+  esperaRefresco({ ...vigente, refreshSeconds: 3600 }, consulta, 0) === 600_000)
+check('una frecuencia que no es un número no deja el refresco a cero',
+  esperaRefresco({ ...vigente, refreshSeconds: 'a ratos' }, consulta, 0) === 60_000)
 
 console.log(fails === 0 ? '\nTodas las comprobaciones pasan.' : `\n${fails} COMPROBACIONES FALLIDAS`)
 process.exit(fails === 0 ? 0 : 1)

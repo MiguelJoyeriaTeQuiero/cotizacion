@@ -19,11 +19,23 @@ import { gradePrice, refreshSecondsOf } from './_lib/defaults.js'
 // llamadas a la API, porque entre medias responde la caché de Redis.
 const CDN_MAX_AGE = 30
 
-// Margen en el que la CDN puede servir la respuesta caducada mientras la
-// renueva por detrás. Corto por la misma razón: con 300 s, la primera visita
-// tras un rato sin tráfico recibía una tarifa de hasta cinco minutos, y un
-// cambio de fórmulas recién publicado no aparecía en la tabla del cliente.
-const CDN_STALE = 30
+// Con el dato retrasado, la CDN lo guarda poco: en cuanto el mercado vuelva a
+// responder, la tabla tiene que dejar de enseñar el viejo.
+const CDN_STALE_MAX_AGE = 5
+
+/**
+ * Cuánto puede guardar la CDN esta respuesta: lo que le queda de vida a la
+ * cotización, con el tope de arriba. Así nunca sirve una cotización que Redis
+ * ya ha renovado, y la pestaña que pregunta justo después de la renovación
+ * recibe la nueva. No lleva stale-while-revalidate: servir la respuesta
+ * caducada mientras se renueva era lo que dejaba la tabla una vuelta por detrás.
+ */
+function cdnMaxAge(market, refreshSeconds) {
+  const { fetchedAt, stale } = market
+  if (stale || !fetchedAt) return CDN_STALE_MAX_AGE
+  const left = Math.ceil((fetchedAt + refreshSeconds * 1000 - Date.now()) / 1000)
+  return Math.min(CDN_MAX_AGE, Math.max(1, left))
+}
 
 // Las muestras guardadas no necesitan más precisión que la que se publica.
 const round4 = (n) => Math.round(n * 10000) / 10000
@@ -79,7 +91,7 @@ export default async function handler(req, res) {
       {
         // La CDN de Vercel sirve la misma respuesta durante unos segundos: una
         // subida de tráfico no se traduce en llamadas extra a la API de mercado.
-        'Cache-Control': `public, s-maxage=${CDN_MAX_AGE}, stale-while-revalidate=${CDN_STALE}`,
+        'Cache-Control': `public, s-maxage=${cdnMaxAge(market, refreshSeconds)}`,
       }
     )
   } catch (err) {

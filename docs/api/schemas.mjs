@@ -106,7 +106,7 @@ export const schemas = {
   Precios: object({
     fixing: ref('Fixing'), change: object({ gold: number('Variación porcentual.'), silver: number('Variación porcentual.') }, ['gold', 'silver']),
     fetchedAt: { type: 'integer', format: 'int64', nullable: true, description: 'Recepción del proveedor en milisegundos Unix; null para respaldo sin caché.' },
-    stale: { type: 'boolean', description: 'True si se entrega caché vencida o fixing de emergencia.' },
+    stale: { type: 'boolean', description: 'True si la consulta de esta petición ha fallado, si la caché supera la frecuencia en más de 10 segundos mientras otra petición la renueva o se espera tras un fallo, o si se entrega el fixing de emergencia.' },
     refreshSeconds: integer('Frecuencia configurada, en segundos.'), formulasVersion: { type: 'integer', nullable: true },
     gold: list(ref('LeyPublica')), silver: list(ref('LeyPublica')),
   }, ['fixing', 'change', 'fetchedAt', 'stale', 'refreshSeconds', 'formulasVersion', 'gold', 'silver']),
