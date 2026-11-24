@@ -6958,7 +6958,7 @@
     "status": "reviewed",
     "pendingReview": [],
     "sourceHash": "7b0d5f16dec69af7e1a1fbd5a560665153169c9598c688ede26e0e828e10b820",
-    "projectHash": "ae3644ed8c97b3fde5a783549b03962a56635313b77c6ffeded127092fedff03",
+    "projectHash": "f0524fa766db7c0a2524c595b49e62a2f1b60b4ba84f02f3411bd4e51def4811",
     "inventory": {
       "/api/admin/clientes": {
         "file": "api/admin/clientes.js",

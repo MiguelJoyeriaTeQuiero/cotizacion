@@ -499,6 +499,7 @@
 .sim__inputs { display: flex; align-items: center; gap: 12px 20px; flex-wrap: wrap; margin-bottom: 10px; }
 .sim__fecha { width: auto; min-width: 150px; }
 .sim__gramos { width: 120px; }
+.sim__fixing { width: 140px; }
 .sim__context { margin: 0 0 16px; font-size: 13px; color: var(--ink-3); line-height: 1.5; }
 .sim__context b { color: var(--ink); font-weight: 600; }
 .sim__error { color: var(--down); }

@@ -3,6 +3,7 @@ import { validateFormulas } from '../../api/_lib/validate.js'
 import { DEFAULT_FORMULAS, gradePrice, refreshSecondsOf } from '../../api/_lib/defaults.js'
 import { parsearLote } from '../../src/shared/lote.js'
 import { esperaRefresco } from '../../src/shared/refresco.js'
+import { leerCifra } from '../../src/shared/cifras.js'
 import { ventanasDe, validarFecha, fechaDe, vacio, acumular, resumir, resumenesDe } from '../../api/_lib/precios-dia.js'
 
 let fails = 0
@@ -218,6 +219,15 @@ check('una ley que aparece a mitad del día cuenta solo sus registros', conNueva
 const antes = vacio()
 acumular(antes, muestrasDia[0])
 check('acumular no modifica el acumulado de entrada', antes.n === 0)
+
+// ── Cifras tecleadas (el fixing del simulador) ──
+for (const [texto, esperado] of [
+  ['3950', 3950], ['3.950', 3950], ['3950,5', 3950.5], ['3.950,50', 3950.5], ['3950.50', 3950.5],
+  ['3 950', 3950], ['1.234.567', 1234567], ['31,25', 31.25], ['31.25', 31.25], ['0,5', 0.5], ['0.5', 0.5],
+  ['3,950.50', 3950.5], [' 4100 ', 4100],
+]) check(`«${texto}» se lee como ${esperado}`, leerCifra(texto) === esperado)
+for (const texto of ['', '   ', 'abc', '3.95.0', '3,9,5', '3.950,5,0', '12a', '3..950', '1,234,567', '0.500.000'])
+  check(`«${texto}» no se entiende`, leerCifra(texto) === null)
 
 console.log(fails === 0 ? '\nTodas las comprobaciones pasan.' : `\n${fails} COMPROBACIONES FALLIDAS`)
 process.exit(fails === 0 ? 0 : 1)

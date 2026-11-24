@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api'
 import { METALS, fmtDec, fmtSigned, parseNum, priceOf, metalValue, marginPct, breakEvenFixing } from '../lib/formulas'
+import { leerCifra } from '../../shared/cifras'
 
 // «¿Y si el oro se mueve un 5 %?», hoy o cualquier día pasado.
 //
@@ -11,11 +12,17 @@ import { METALS, fmtDec, fmtSigned, parseNum, priceOf, metalValue, marginPct, br
 // Con un día pasado, la base deja de ser la cotización en directo y pasa a ser
 // la media de lo que se publicó ese día de 7:00 a 17:00 (hora de Canarias), el
 // horario de los cierres. El porcentaje se aplica sobre esa media.
+//
+// En vez del porcentaje se puede escribir un fixing (€/oz): «¿y si el oro
+// estuviera a 3.950?». Manda sobre el porcentaje hasta que se toca el
+// deslizador o se quita; cada metal guarda el suyo.
 
 const QUICK = [-10, -5, -2, 0, 2, 5, 10]
 const ZONA = 'Atlantic/Canary'
 // El mismo tope que una línea de cierre.
 const MAX_GRAMOS = 100000
+// Un fixing por encima de esto es un error al teclear, no una cotización.
+const MAX_FIXING = 100000
 
 /** Hoy en Canarias como 'AAAA-MM-DD' (en-CA escribe las fechas así). */
 function hoyEnCanarias() {
@@ -63,6 +70,7 @@ export function Simulador({ p }) {
   const [metal, setMetal] = useState('gold')
   const [pct, setPct] = useState(5)
   const [gramosTxt, setGramosTxt] = useState('')
+  const [fixingTxt, setFixingTxt] = useState({ gold: '', silver: '' })
   const hoy = hoyEnCanarias()
   const [fecha, setFecha] = useState(hoy)
   const [dia, setDia] = useState({ fecha: null, datos: null, error: null })
@@ -91,10 +99,21 @@ export function Simulador({ p }) {
   const gramosOk = gramos != null && gramos > 0 && gramos <= MAX_GRAMOS
   const gramosMal = gramosTxt.trim() !== '' && !gramosOk
 
+  const fixingTexto = fixingTxt[metal]
+  const fixingManual = leerCifra(fixingTexto)
+  const fixingOk = fixingManual != null && fixingManual > 0 && fixingManual <= MAX_FIXING
+  const fixingMal = fixingTexto.trim() !== '' && !fixingOk
+  const ponerFixing = (texto) => setFixingTxt(f => ({ ...f, [metal]: texto }))
+
   const base = esHoy
     ? (market?.fixing?.[metal] ?? null)
     : (media?.fixing?.[metal]?.media ?? null)
-  const simulated = base != null ? base * (1 + pct / 100) : null
+  const simulated = fixingOk ? fixingManual : base != null ? base * (1 + pct / 100) : null
+  // Con un fixing escrito, la variación que supone sobre la base, para verla igual.
+  const pctVista = fixingOk ? (base ? (fixingManual / base - 1) * 100 : null) : pct
+  const tono = pctVista > 0 ? ' up' : pctVista < 0 ? ' down' : ''
+  // Tocar el porcentaje es volver a él: se quita el fixing de este metal.
+  const cambiarPct = (valor) => { setPct(valor); ponerFixing('') }
 
   const rows = useMemo(() => draft[metal].map(row => {
     let now, then, marginNow, marginThen
@@ -170,10 +189,12 @@ export function Simulador({ p }) {
               <>
                 <span className="sim__from">{fmtDec(base, 2)} €/oz</span>
                 <span className="sim__arrow" aria-hidden="true">→</span>
-                <b className={`sim__to${pct > 0 ? ' up' : pct < 0 ? ' down' : ''}`}>
+                <b className={`sim__to${tono}`}>
                   {fmtDec(simulated, 2)} €/oz
                 </b>
               </>
+            ) : fixingOk ? (
+              <b className="sim__to">{fmtDec(simulated, 2)} €/oz</b>
             ) : (
               <span className="sim__from">{cargando ? 'Cargando…' : 'Sin cotización'}</span>
             )}
@@ -206,6 +227,21 @@ export function Simulador({ p }) {
               onChange={(e) => setGramosTxt(e.target.value)}
             />
           </label>
+          <label className="field-inline">
+            <span>Fixing</span>
+            <input
+              className="input num sim__fixing"
+              inputMode="decimal"
+              placeholder="€/oz · opcional"
+              value={fixingTexto}
+              aria-invalid={fixingMal || undefined}
+              aria-label={`Fixing del ${cfg.label.toLowerCase()} en euros por onza`}
+              onChange={(e) => ponerFixing(e.target.value)}
+            />
+          </label>
+          {fixingTexto && (
+            <button className="btn small ghost" onClick={() => ponerFixing('')}>Quitar fixing</button>
+          )}
         </div>
 
         <p className="sim__context">
@@ -226,6 +262,14 @@ export function Simulador({ p }) {
               {datosDia.enCurso && ' El día aún no ha terminado.'}
             </>
           ) : null}
+          {fixingOk && (
+            <>
+              {' '}Simulado con tu fixing de <b className="num">{fmtDec(fixingManual, 2)} €/oz</b>
+              {pctVista != null && <> ({fmtSigned(pctVista, 2)} % sobre {esHoy ? 'la cotización' : 'la media del día'})</>}.
+              {' '}Mueve el porcentaje o quita el fixing para volver a la variación.
+            </>
+          )}
+          {fixingMal && <span className="sim__error"> El fixing tiene que ser un número mayor que 0, en €/oz (por ejemplo, 3.950 o 3950,50).</span>}
           {gramosMal && <span className="sim__error"> Los gramos tienen que ser un número mayor que 0 y hasta {fmtDec(MAX_GRAMOS, 0)}.</span>}
         </p>
 
@@ -247,12 +291,12 @@ export function Simulador({ p }) {
             min={-10}
             max={10}
             step={0.5}
-            value={pct}
-            onChange={(e) => setPct(Number(e.target.value))}
+            value={fixingOk ? Math.max(-10, Math.min(10, pctVista ?? 0)) : pct}
+            onChange={(e) => cambiarPct(Number(e.target.value))}
             aria-label={`Variación del ${cfg.label.toLowerCase()} en porcentaje`}
           />
-          <output className={`sim__pct${pct > 0 ? ' up' : pct < 0 ? ' down' : ''}`}>
-            {fmtSigned(pct, 1)} %
+          <output className={`sim__pct${tono}`}>
+            {pctVista == null ? '—' : `${fmtSigned(pctVista, fixingOk ? 2 : 1)} %`}
           </output>
         </div>
 
@@ -260,8 +304,8 @@ export function Simulador({ p }) {
           {QUICK.map(v => (
             <button
               key={v}
-              className={`chip${pct === v ? ' on' : ''}`}
-              onClick={() => setPct(v)}
+              className={`chip${!fixingOk && pct === v ? ' on' : ''}`}
+              onClick={() => cambiarPct(v)}
             >
               {v === 0 ? 'Sin cambio' : `${fmtSigned(v, 0)} %`}
             </button>
@@ -281,10 +325,10 @@ export function Simulador({ p }) {
               <tr>
                 <th>Ley</th>
                 <th className="right">{esHoy ? 'Ahora' : `Media ${fechaCorta(fechaEf)}`}</th>
-                <th className="right">Simulado</th>
+                <th className="right">{fixingOk ? 'Con tu fixing' : 'Simulado'}</th>
                 <th className="right">Diferencia</th>
                 {gramosOk && <th className="right">{gramosTexto} <span className="unidad">g</span></th>}
-                {gramosOk && <th className="right">{gramosTexto} <span className="unidad">g</span> simulado</th>}
+                {gramosOk && <th className="right">{gramosTexto} <span className="unidad">g</span> {fixingOk ? 'con tu fixing' : 'simulado'}</th>}
                 <th className="right">Margen</th>
                 <th className="right">Margen cero en</th>
               </tr>
@@ -358,8 +402,8 @@ export function Simulador({ p }) {
           <p className="note">
             Con un día pasado, la primera columna es la <strong>media de lo que se publicó</strong> ese
             día de 7:00 a 17:00, con el mínimo y el máximo debajo si se movió. El simulado le suma lo
-            que movería esa variación con las fórmulas del borrador, así que con «Sin cambio» es
-            exactamente el precio de ese día.
+            que movería esa variación (o pasar de la media al fixing que escribas) con las fórmulas
+            del borrador, así que con «Sin cambio» es exactamente el precio de ese día.
           </p>
         )}
         {gramosOk && (

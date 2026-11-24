@@ -308,6 +308,11 @@ precio que se pagaría y, sobre todo, qué pasa con el margen.
 - **Gramos.** Opcional. Añade dos columnas con el importe de esos gramos en cada
   ley, al precio del día y al simulado: el €/g redondeado (2 decimales en oro, 3
   en plata) y después por los gramos.
+- **Fixing.** Opcional, en €/oz, uno para el oro y otro para la plata. En vez de
+  un porcentaje, se escribe la cotización que se quiere probar («3.950» o
+  «3950,50») y la tabla sale a ese fixing; arriba se ve cuánto supone sobre la
+  cotización (o sobre la media del día elegido). Manda sobre el porcentaje hasta
+  que se toca el deslizador o se pulsa **Quitar fixing**.
 
 La media sale de las fotos que va guardando la web (ver Evolución): si un día
 hubo horas sin visitas, pesan más las que sí tienen foto. Cada día se resume
