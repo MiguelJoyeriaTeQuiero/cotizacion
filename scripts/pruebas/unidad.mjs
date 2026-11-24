@@ -3,6 +3,7 @@ import { validateFormulas } from '../../api/_lib/validate.js'
 import { DEFAULT_FORMULAS, gradePrice, refreshSecondsOf } from '../../api/_lib/defaults.js'
 import { parsearLote } from '../../src/shared/lote.js'
 import { esperaRefresco } from '../../src/shared/refresco.js'
+import { ventanasDe, validarFecha, fechaDe, vacio, acumular, resumir, resumenesDe } from '../../api/_lib/precios-dia.js'
 
 let fails = 0
 const check = (name, cond) => {
@@ -176,6 +177,47 @@ check('con una frecuencia de horas no espera más de 10 min',
   esperaRefresco({ ...vigente, refreshSeconds: 3600 }, consulta, 0) === 600_000)
 check('una frecuencia que no es un número no deja el refresco a cero',
   esperaRefresco({ ...vigente, refreshSeconds: 'a ratos' }, consulta, 0) === 60_000)
+
+// ── Media del día: de 7:00 a 17:00, hora de Canarias ──
+// El martes 3 de noviembre de 2026 Canarias va en invierno (UTC+0); el 15 de
+// julio, en verano (UTC+1). El domingo 25 de octubre se cambia la hora.
+check('en invierno la ventana va de 07:00Z a 17:00Z',
+  ventanasDe('2026-11-03').horario.desde === Date.UTC(2026, 10, 3, 7) && ventanasDe('2026-11-03').horario.hasta === Date.UTC(2026, 10, 3, 17))
+check('en verano, de 06:00Z a 16:00Z',
+  ventanasDe('2026-07-15').horario.desde === Date.UTC(2026, 6, 15, 6) && ventanasDe('2026-07-15').horario.hasta === Date.UTC(2026, 6, 15, 16))
+check('el día del cambio de hora dura 25 horas',
+  ventanasDe('2026-10-25').dia.hasta - ventanasDe('2026-10-25').dia.desde === 25 * 3600e3)
+check('el día de una muestra es el de Canarias, no el de UTC', fechaDe(Date.UTC(2026, 6, 15, 23, 30)) === '2026-07-16')
+
+const ahoraFecha = Date.UTC(2026, 10, 18, 12)
+check('acepta un día real', validarFecha('2026-11-03', { ahora: ahoraFecha }).ok === true)
+check('acepta hoy', validarFecha('2026-11-18', { ahora: ahoraFecha }).ok === true)
+check('rechaza mañana', validarFecha('2026-11-19', { ahora: ahoraFecha }).ok === false)
+check('rechaza un 30 de febrero', validarFecha('2026-02-30', { ahora: ahoraFecha }).ok === false)
+check('rechaza otro formato', validarFecha('03/11/2026', { ahora: ahoraFecha }).ok === false)
+check('rechaza antes de 2020', validarFecha('2019-12-31', { ahora: ahoraFecha }).ok === false)
+
+// Una muestra cada hora de 05:00 a 18:00 (invierno): diez caen de 7:00 a 17:00.
+const muestrasDia = Array.from({ length: 14 }, (_, i) => ({
+  t: Date.UTC(2026, 10, 3, 5 + i),
+  fixing: { gold: 3000 + i, silver: 30 },
+  version: 1,
+  gold: { au18: 70 + i / 10 },
+  silver: { ag925: 0.9 },
+}))
+const resDia = resumenesDe(muestrasDia).get('2026-11-03')
+check('el día entero cuenta las 14 muestras', resDia.dia.n === 14)
+check('la ventana de 7 a 17, solo las 10 de 7:00 a 16:00', resDia.horario.n === 10)
+const medDia = resumir(resDia.horario)
+check('la media de la cotización es la de esas 10', medDia.fixing.gold.media === 3006.5 && medDia.fixing.gold.min === 3002 && medDia.fixing.gold.max === 3011)
+check('la media de cada ley, también', medDia.gold.au18.media === 70.65 && medDia.gold.au18.n === 10)
+check('dice cuándo empieza y acaba lo registrado', medDia.desde === '2026-11-03T07:00:00.000Z' && medDia.hasta === '2026-11-03T16:00:00.000Z')
+check('sin muestras no hay media', resumir(vacio()) === null)
+const conNueva = acumular(acumular(vacio(), muestrasDia[0]), { ...muestrasDia[1], gold: { au18: 71, au21: 80 } })
+check('una ley que aparece a mitad del día cuenta solo sus registros', conNueva.gold.au21.n === 1 && conNueva.gold.au18.n === 2)
+const antes = vacio()
+acumular(antes, muestrasDia[0])
+check('acumular no modifica el acumulado de entrada', antes.n === 0)
 
 console.log(fails === 0 ? '\nTodas las comprobaciones pasan.' : `\n${fails} COMPROBACIONES FALLIDAS`)
 process.exit(fails === 0 ? 0 : 1)

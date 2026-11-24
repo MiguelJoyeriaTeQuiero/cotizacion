@@ -149,7 +149,7 @@ se puede editar en una sección, comprobar en otra y publicar desde cualquiera.
 | **Cierres** | Las solicitudes de cierre que llegan del portal, con su precio reservado y su reloj: confirmar o rechazar. |
 | **Clientes** | Las altas que llegan del portal: revisar la documentación y aprobar, pedir más papeles o rechazar. |
 | **Fórmulas** | El editor de siempre: leyes, factores y el precio que quedaría. |
-| **Simulador** | Qué pasaría con la tabla si el metal subiera o bajara un tanto por ciento. |
+| **Simulador** | Qué pasaría con la tabla si el metal subiera o bajara un tanto por ciento, hoy o cualquier día pasado, y cuánto serían unos gramos concretos. |
 | **Escenarios** | Juegos de fórmulas guardados con nombre, sin publicar, para cargarlos el día que toque. |
 | **Historial** | Las últimas 50 publicaciones, con qué cambió cada una y cuánto movió el precio. |
 | **Evolución** | Gráfica de lo que se ha ido pagando frente a la cotización del metal. |
@@ -299,6 +299,22 @@ que tocar algo hoy.
 Un deslizador de −10 % a +10 % que recalcula toda la tabla. Sirve para ver el
 precio que se pagaría y, sobre todo, qué pasa con el margen.
 
+- **Día.** Por defecto, hoy: el porcentaje se aplica sobre la cotización en
+  directo, y debajo se ve cómo va la media del día. Con un día pasado, la base
+  es la **media de lo que se publicó ese día de 7:00 a 17:00** (hora de
+  Canarias), con el mínimo y el máximo de cada ley. Con «Sin cambio» sale el
+  precio real de ese día; con +5 %, lo que habría sido si el metal hubiera
+  estado un 5 % más alto. Los fines de semana se calculan igual, con un aviso.
+- **Gramos.** Opcional. Añade dos columnas con el importe de esos gramos en cada
+  ley, al precio del día y al simulado: el €/g redondeado (2 decimales en oro, 3
+  en plata) y después por los gramos.
+
+La media sale de las fotos que va guardando la web (ver Evolución): si un día
+hubo horas sin visitas, pesan más las que sí tienen foto. Cada día se resume
+aparte y ese resumen no caduca, así que la media de un día sigue ahí aunque las
+fotos por hora ya se hayan borrado. Lo que no hay es media de los días
+anteriores a que empezara el registro.
+
 Con el factor 3 a cero el margen no se mueve: es exactamente `1 − f1 × f2`, la
 misma proporción suba o baje el metal. Solo el factor 3, al ser una cantidad
 fija en euros, hace que el margen varíe según cotice. La última columna indica
@@ -389,8 +405,10 @@ que no se apunte una por visita.
   iconos son SVG escritos a mano. Es lo que permite mantener la CSP estricta de
   `vercel.json` sin excepciones.
 - **Qué se guarda en Redis**: las fórmulas vigentes, el historial de 50
-  versiones, la caché de cotización, hasta 12 escenarios y hasta 1000 muestras
-  de evolución (una por hora como mucho).
+  versiones, la caché de cotización, hasta 12 escenarios, hasta 1000 muestras
+  de evolución (una por hora como mucho) y un resumen por día de esas muestras
+  (`tqm:prices:dia:AAAA-MM-DD`), que no caduca y es lo que usa el simulador para
+  la media de un día pasado.
 - **Las preferencias del panel** (sección de inicio, densidad, etc.) viven en el
   `localStorage` del navegador. La sesión sigue viajando solo en la cookie
   `HttpOnly`.

@@ -1006,19 +1006,19 @@
           "Historial y series"
         ],
         "operationId": "seriePrecios",
-        "summary": "Evolución de precios publicados",
+        "summary": "Evolución de precios publicados o media de un día",
         "security": [
           {
             "AdminCookie": []
           }
         ],
-        "description": "Ventanas 7, 30 o 90 días; cualquier otra entrada usa 30. Filtra y ordena cronológicamente hasta 1.000 muestras almacenadas y devuelve como máximo 240 por muestreo. total cuenta todas las muestras almacenadas, antes del filtro. El histórico se alimenta del tráfico a prices.",
+        "description": "Sin fecha: ventanas 7, 30 o 90 días; cualquier otra entrada usa 30. Filtra y ordena cronológicamente hasta 1.000 muestras almacenadas y devuelve como máximo 240 por muestreo. total cuenta todas las muestras almacenadas, antes del filtro. El histórico se alimenta del tráfico a prices: como mucho una muestra por hora y solo cuando alguien la pide. Con fecha (AAAA-MM-DD, de 2020 a hoy en Canarias; se ignora days): media aritmética de lo publicado ese día de 7:00 a 17:00, hora de Canarias, con mínimo, máximo y número de registros de la cotización y del EUR/g de cada ley. No pondera por tiempo: si hay horas sin visitas, pesan más las que tienen registro. Se calcula con las muestras por hora mientras las conservan enteras y, después, con un resumen diario sin caducidad (tqm:prices:dia:AAAA-MM-DD) que prices actualiza con cada muestra. Fines de semana se calculan igual y se marcan con laborable=false. Fecha mal formada, inexistente o futura: 400. La primera lectura de cualquiera de los dos modos resume una sola vez los días que las muestras ya tenían enteros.",
         "parameters": [
           {
             "name": "days",
             "in": "query",
             "required": false,
-            "description": "Ventana solicitada; valor por defecto 30.",
+            "description": "Ventana solicitada; valor por defecto 30. Se ignora con fecha.",
             "schema": {
               "type": "integer",
               "enum": [
@@ -1028,15 +1028,33 @@
               ],
               "default": 30
             }
+          },
+          {
+            "name": "fecha",
+            "in": "query",
+            "required": false,
+            "description": "Día del que se quiere la media de 7:00 a 17:00, hora de Canarias.",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-11-03"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Serie reducida para visualización.",
+            "description": "Serie reducida para visualización o, con fecha, media del día.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Serie"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Serie"
+                    },
+                    {
+                      "$ref": "#/components/schemas/MediaDia"
+                    }
+                  ]
                 },
                 "examples": {
                   "vacia": {
@@ -1045,6 +1063,94 @@
                       "days": 30,
                       "total": 0,
                       "samples": []
+                    }
+                  },
+                  "dia": {
+                    "summary": "fecha=2026-11-03",
+                    "value": {
+                      "fecha": "2026-11-03",
+                      "zona": "Atlantic/Canary",
+                      "apertura": "7:00",
+                      "cierre": "17:00",
+                      "ventana": {
+                        "desde": "2026-11-03T07:00:00.000Z",
+                        "hasta": "2026-11-03T17:00:00.000Z"
+                      },
+                      "laborable": true,
+                      "festivo": null,
+                      "enCurso": false,
+                      "fuente": "muestras",
+                      "media": {
+                        "n": 10,
+                        "desde": "2026-11-03T07:00:00.000Z",
+                        "hasta": "2026-11-03T16:00:00.000Z",
+                        "fixing": {
+                          "gold": {
+                            "media": 3010.5,
+                            "min": 3002,
+                            "max": 3018,
+                            "n": 10
+                          },
+                          "silver": {
+                            "media": 30.1,
+                            "min": 30,
+                            "max": 30.2,
+                            "n": 10
+                          }
+                        },
+                        "gold": {
+                          "au18": {
+                            "media": 72.5997,
+                            "min": 72.3955,
+                            "max": 72.7814,
+                            "n": 10
+                          }
+                        },
+                        "silver": {
+                          "ag925": {
+                            "media": 0.8953,
+                            "min": 0.8923,
+                            "max": 0.8982,
+                            "n": 10
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "sinDatos": {
+                    "summary": "Día sin registros",
+                    "value": {
+                      "fecha": "2026-11-03",
+                      "zona": "Atlantic/Canary",
+                      "apertura": "7:00",
+                      "cierre": "17:00",
+                      "ventana": {
+                        "desde": "2026-11-03T07:00:00.000Z",
+                        "hasta": "2026-11-03T17:00:00.000Z"
+                      },
+                      "laborable": true,
+                      "festivo": null,
+                      "enCurso": false,
+                      "fuente": null,
+                      "media": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Petición no válida o acción no reconocida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error": {
+                    "summary": "Ejemplo de error",
+                    "value": {
+                      "error": "Petición no válida o acción no reconocida."
                     }
                   }
                 }
@@ -3596,6 +3702,179 @@
           "samples"
         ]
       },
+      "EstadisticaDia": {
+        "type": "object",
+        "properties": {
+          "media": {
+            "type": "number",
+            "description": "Media aritmética de los registros, redondeada a 4 decimales."
+          },
+          "min": {
+            "type": "number",
+            "description": "Valor más bajo registrado."
+          },
+          "max": {
+            "type": "number",
+            "description": "Valor más alto registrado."
+          },
+          "n": {
+            "type": "integer",
+            "description": "Registros que la forman; una ley creada a mitad del día puede tener menos que el total.",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "media",
+          "min",
+          "max",
+          "n"
+        ]
+      },
+      "ResumenDia": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "description": "Registros del día dentro de la ventana; como mucho uno por hora.",
+            "minimum": 1
+          },
+          "desde": {
+            "type": "string",
+            "description": "Primer registro de la ventana.",
+            "format": "date-time",
+            "nullable": false
+          },
+          "hasta": {
+            "type": "string",
+            "description": "Último registro de la ventana.",
+            "format": "date-time",
+            "nullable": false
+          },
+          "fixing": {
+            "type": "object",
+            "properties": {
+              "gold": {
+                "$ref": "#/components/schemas/EstadisticaDia"
+              },
+              "silver": {
+                "$ref": "#/components/schemas/EstadisticaDia"
+              }
+            },
+            "description": "Cotización EUR/oz."
+          },
+          "gold": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/EstadisticaDia"
+            },
+            "description": "EUR/g publicado por clave de ley."
+          },
+          "silver": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/EstadisticaDia"
+            },
+            "description": "EUR/g publicado por clave de ley."
+          }
+        },
+        "required": [
+          "n",
+          "desde",
+          "hasta",
+          "fixing",
+          "gold",
+          "silver"
+        ],
+        "nullable": true,
+        "description": "Media de lo publicado en la ventana; null si no hay registros."
+      },
+      "MediaDia": {
+        "type": "object",
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "description": "Día pedido, en Canarias.",
+            "format": "date",
+            "example": "2026-11-03"
+          },
+          "zona": {
+            "type": "string",
+            "description": "Zona horaria de la ventana.",
+            "enum": [
+              "Atlantic/Canary"
+            ]
+          },
+          "apertura": {
+            "type": "string",
+            "description": "Inicio de la ventana.",
+            "example": "7:00"
+          },
+          "cierre": {
+            "type": "string",
+            "description": "Fin de la ventana, excluido.",
+            "example": "17:00"
+          },
+          "ventana": {
+            "type": "object",
+            "properties": {
+              "desde": {
+                "type": "string",
+                "description": "7:00 de ese día en Canarias.",
+                "format": "date-time",
+                "nullable": false
+              },
+              "hasta": {
+                "type": "string",
+                "description": "17:00 de ese día en Canarias.",
+                "format": "date-time",
+                "nullable": false
+              }
+            },
+            "required": [
+              "desde",
+              "hasta"
+            ]
+          },
+          "laborable": {
+            "type": "boolean",
+            "description": "De lunes a viernes y no festivo. Solo informa: la media se calcula igual."
+          },
+          "festivo": {
+            "type": "string",
+            "description": "Nombre del festivo si está apuntado como tal; null si no lo es.",
+            "nullable": true
+          },
+          "enCurso": {
+            "type": "boolean",
+            "description": "Cierto si es hoy y aún no son las 17:00: la media puede cambiar."
+          },
+          "fuente": {
+            "type": "string",
+            "description": "muestras si las muestras por hora tienen el día entero; resumen si ya se han recortado y se lee el resumen diario; null sin datos.",
+            "enum": [
+              "muestras",
+              "resumen",
+              null
+            ],
+            "nullable": true
+          },
+          "media": {
+            "$ref": "#/components/schemas/ResumenDia"
+          }
+        },
+        "required": [
+          "fecha",
+          "zona",
+          "apertura",
+          "cierre",
+          "ventana",
+          "laborable",
+          "festivo",
+          "enCurso",
+          "fuente",
+          "media"
+        ]
+      },
       "Escenario": {
         "type": "object",
         "properties": {
@@ -4939,8 +5218,8 @@
     "profile": "current-release",
     "status": "reviewed",
     "pendingReview": [],
-    "sourceHash": "b506917037489464e9a46b38c599839f27c582849849f63da706242faea5fa7f",
-    "projectHash": "61016d0c92b8c7b9057b0e49ea0bec58971c84a44fb637b8c6854f4edcdc47a6",
+    "sourceHash": "7b0d5f16dec69af7e1a1fbd5a560665153169c9598c688ede26e0e828e10b820",
+    "projectHash": "ae3644ed8c97b3fde5a783549b03962a56635313b77c6ffeded127092fedff03",
     "inventory": {
       "/api/admin/clientes": {
         "file": "api/admin/clientes.js",
@@ -5040,7 +5319,8 @@
         ],
         "actions": [],
         "statuses": [
-          "200"
+          "200",
+          "400"
         ]
       },
       "/api/admin/session": {

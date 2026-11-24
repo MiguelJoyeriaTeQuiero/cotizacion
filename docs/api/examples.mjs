@@ -18,6 +18,18 @@ export const precios = {
   gold: [{ key: 'au18', label: 'Oro 18k', fineness: 750, pricePerGram: 75 }],
   silver: [{ key: 'ag925', label: 'Plata 925', fineness: 925, pricePerGram: 0.925 }],
 }
+// Martes 3 de noviembre de 2026: 10 registros entre las 7:00 y las 17:00.
+export const mediaDia = {
+  fecha: '2026-11-03', zona: 'Atlantic/Canary', apertura: '7:00', cierre: '17:00',
+  ventana: { desde: '2026-11-03T07:00:00.000Z', hasta: '2026-11-03T17:00:00.000Z' },
+  laborable: true, festivo: null, enCurso: false, fuente: 'muestras',
+  media: {
+    n: 10, desde: '2026-11-03T07:00:00.000Z', hasta: '2026-11-03T16:00:00.000Z',
+    fixing: { gold: { media: 3010.5, min: 3002, max: 3018, n: 10 }, silver: { media: 30.1, min: 30, max: 30.2, n: 10 } },
+    gold: { au18: { media: 72.5997, min: 72.3955, max: 72.7814, n: 10 } },
+    silver: { ag925: { media: 0.8953, min: 0.8923, max: 0.8982, n: 10 } },
+  },
+}
 export const formulas = { ...snapshot, version: 2, updatedAt: '2026-09-17T09:00:00.000Z', updatedBy: 'operador', fixingAtPublish: { ...precios.fixing, at: precios.fetchedAt }, source: 'store' }
 export const cierre = {
   ref: 'TQM-1709-0001', clienteId: cliente.id,

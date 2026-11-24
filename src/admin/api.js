@@ -45,6 +45,8 @@ export const api = {
   saveFormulas: (payload) => request('/api/admin/formulas', { method: 'PUT', body: payload }),
   history: () => request('/api/admin/history'),
   series: (days = 30) => request(`/api/admin/series?days=${days}`),
+  // Media de lo publicado un día, de 7:00 a 17:00 en hora de Canarias.
+  mediaDia: (fecha) => request(`/api/admin/series?fecha=${encodeURIComponent(fecha)}`),
   scenarios: () => request('/api/admin/scenarios'),
   saveScenario: (name, snapshot) => request('/api/admin/scenarios', { method: 'PUT', body: { name, snapshot } }),
   deleteScenario: (name) => request('/api/admin/scenarios', { method: 'DELETE', body: { name } }),

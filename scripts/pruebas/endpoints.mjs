@@ -338,6 +338,28 @@ await call(prices, { method: 'GET', origin: null })
 r = await call(seriesEndpoint, { method: 'GET', cookie })
 check('no se apunta una muestra por visita (hueco mínimo de una hora)', r.body.samples?.length === 1, r.body.samples?.length)
 
+// ─── 12.6b. Media de un día ─────────────────────────────────────────────────
+const { redis: redisPrueba } = await import(`${BASE}/_lib/store.js`)
+const hoyCanarias = new Intl.DateTimeFormat('en-CA', { timeZone: 'Atlantic/Canary', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+const resumenHoy = await redisPrueba().get(`tqm:prices:dia:${hoyCanarias}`)
+check('la muestra apuntada se suma al resumen de su día', resumenHoy?.dia?.n === 1, JSON.stringify(resumenHoy).slice(0, 140))
+
+r = await call(seriesEndpoint, { method: 'GET', cookie, url: `?fecha=${hoyCanarias}` })
+check('media de hoy → 200', r.statusCode === 200, r.statusCode)
+check('la media dice el día, la zona y la ventana de 7 a 17',
+  r.body.fecha === hoyCanarias && r.body.zona === 'Atlantic/Canary' && r.body.apertura === '7:00' && r.body.cierre === '17:00', JSON.stringify(r.body).slice(0, 200))
+check('la media de hoy cuenta solo lo que cae de 7:00 a 17:00',
+  resumenHoy?.horario?.n === 1 ? r.body.media?.n === 1 : r.body.media === null, JSON.stringify(r.body.media).slice(0, 140))
+
+for (const mala of ['2026-02-30', '03/11/2026', 'ayer', '2999-01-01', '']) {
+  r = await call(seriesEndpoint, { method: 'GET', cookie, url: `?fecha=${encodeURIComponent(mala)}` })
+  check(`fecha «${mala}» → 400`, r.statusCode === 400 && typeof r.body.error === 'string', `${r.statusCode} ${JSON.stringify(r.body)}`)
+}
+r = await call(seriesEndpoint, { method: 'GET', url: `?fecha=${hoyCanarias}` })
+check('media del día sin sesión → 401', r.statusCode === 401, r.statusCode)
+r = await call(seriesEndpoint, { method: 'GET', cookie })
+check('sin fecha, la serie sigue igual', Array.isArray(r.body.samples) && r.body.days === 30 && r.body.samples.length === 1, JSON.stringify(r.body).slice(0, 140))
+
 // ─── 12.7. El fixing del momento de publicar ────────────────────────────────
 r = await call(formulas, { method: 'GET', cookie })
 r = await call(formulas, {

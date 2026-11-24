@@ -1,5 +1,5 @@
 import { ref, schemas } from './schemas.mjs'
-import { alta, cliente, snapshot, precios, formulas, cierre } from './examples.mjs'
+import { alta, cliente, snapshot, precios, formulas, cierre, mediaDia } from './examples.mjs'
 
 const admin = [{ AdminCookie: [] }]
 const portal = [{ PortalCookie: [] }]
@@ -76,10 +76,15 @@ export const paths = {
     description: 'Hasta 50 entradas, recientes primero, con autor, IP, fixing y snapshot. Un fallo de lectura puede producir lista vacía en el código actual. Para restaurar se publica el snapshot mediante PUT /api/admin/formulas; no hay endpoint específico de rollback.',
     responses: { 200: response('Historial disponible.', ref('Historial'), { vacio: example('Sin publicaciones', { entries: [] }) }), ...errors(401, 405) }, ...known('ARQ-07', 'ARQ-08'),
   }) },
-  '/api/admin/series': { get: operation('admin/series', 'Historial y series', 'seriePrecios', 'Evolución de precios publicados', admin, {
-    description: 'Ventanas 7, 30 o 90 días; cualquier otra entrada usa 30. Filtra y ordena cronológicamente hasta 1.000 muestras almacenadas y devuelve como máximo 240 por muestreo. total cuenta todas las muestras almacenadas, antes del filtro. El histórico se alimenta del tráfico a prices.',
-    parameters: [query('days', 'Ventana solicitada; valor por defecto 30.', { type: 'integer', enum: [7, 30, 90], default: 30 })],
-    responses: { 200: response('Serie reducida para visualización.', ref('Serie'), { vacia: example('Sin muestras', { days: 30, total: 0, samples: [] }) }), ...errors(401, 405) }, ...known('ARQ-07'),
+  '/api/admin/series': { get: operation('admin/series', 'Historial y series', 'seriePrecios', 'Evolución de precios publicados o media de un día', admin, {
+    description: 'Sin fecha: ventanas 7, 30 o 90 días; cualquier otra entrada usa 30. Filtra y ordena cronológicamente hasta 1.000 muestras almacenadas y devuelve como máximo 240 por muestreo. total cuenta todas las muestras almacenadas, antes del filtro. El histórico se alimenta del tráfico a prices: como mucho una muestra por hora y solo cuando alguien la pide. '
+      + 'Con fecha (AAAA-MM-DD, de 2020 a hoy en Canarias; se ignora days): media aritmética de lo publicado ese día de 7:00 a 17:00, hora de Canarias, con mínimo, máximo y número de registros de la cotización y del EUR/g de cada ley. No pondera por tiempo: si hay horas sin visitas, pesan más las que tienen registro. Se calcula con las muestras por hora mientras las conservan enteras y, después, con un resumen diario sin caducidad (tqm:prices:dia:AAAA-MM-DD) que prices actualiza con cada muestra. Fines de semana se calculan igual y se marcan con laborable=false. Fecha mal formada, inexistente o futura: 400. '
+      + 'La primera lectura de cualquiera de los dos modos resume una sola vez los días que las muestras ya tenían enteros.',
+    parameters: [
+      query('days', 'Ventana solicitada; valor por defecto 30. Se ignora con fecha.', { type: 'integer', enum: [7, 30, 90], default: 30 }),
+      query('fecha', 'Día del que se quiere la media de 7:00 a 17:00, hora de Canarias.', { type: 'string', format: 'date', example: '2026-11-03' }),
+    ],
+    responses: { 200: response('Serie reducida para visualización o, con fecha, media del día.', { anyOf: [ref('Serie'), ref('MediaDia')] }, { vacia: example('Sin muestras', { days: 30, total: 0, samples: [] }), dia: example('fecha=2026-11-03', mediaDia), sinDatos: example('Día sin registros', { ...mediaDia, fuente: null, media: null }) }), ...errors(400, 401, 405) }, ...known('ARQ-07'),
   }) },
   '/api/admin/scenarios': {
     get: operation('admin/scenarios', 'Fórmulas y escenarios', 'listarEscenarios', 'Listar escenarios sin publicar', admin, {

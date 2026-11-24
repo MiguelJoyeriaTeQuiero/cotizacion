@@ -1,5 +1,6 @@
 import { json, methodNotAllowed } from './_lib/http.js'
 import { getFormulas, recordSample } from './_lib/store.js'
+import { apuntarEnDia } from './_lib/precios-dia.js'
 import { resolveMarket } from './_lib/market.js'
 import { gradePrice, refreshSecondsOf } from './_lib/defaults.js'
 
@@ -64,15 +65,18 @@ export default async function handler(req, res) {
 
     // Foto para la gráfica de evolución del panel. Se escribe como mucho una vez
     // por hora y nunca hace fallar la respuesta: si el registro no sale, la web
-    // sigue sirviendo precios igual.
+    // sigue sirviendo precios igual. La misma foto se suma al resumen de su
+    // día, que es lo que permite consultar la media de un día cuando las
+    // muestras ya se han recortado.
     if (!market.stale) {
-      await recordSample({
+      const muestra = {
         t: Date.now(),
         fixing: market.fixing,
         version: formulas.version ?? null,
         gold: Object.fromEntries(gold.map(g => [g.key, round4(g.pricePerGram)])),
         silver: Object.fromEntries(silver.map(g => [g.key, round4(g.pricePerGram)])),
-      })
+      }
+      if (await recordSample(muestra)) await apuntarEnDia(muestra)
     }
 
     json(

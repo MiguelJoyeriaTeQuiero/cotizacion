@@ -51,6 +51,45 @@ check('el historial funciona en memoria', r.body.entries?.length === 1, JSON.str
 r = await call(login, { method:'POST', body:{ username:'local', password:'mala' } })
 check('sigue rechazando contraseñas incorrectas', r.statusCode === 401, r.statusCode)
 
+// ── Media del día con el almacén en memoria ──
+const dia = await import(`${BASE}/_lib/precios-dia.js`)
+const { redis, SERIES_MAX } = await import(`${BASE}/_lib/store.js`)
+const SERIE = 'tqm:prices:series'
+await redis().del(SERIE)
+const muestra = (t, oro) => ({ t, fixing: { gold: oro, silver: 30 }, version: 1, gold: { au18: oro / 40 }, silver: { ag925: 0.9 } })
+// Martes 3 de noviembre de 2026 (invierno): de 05:00 a 18:00, una por hora.
+for (let h = 5; h <= 18; h++) await redis().lpush(SERIE, muestra(Date.UTC(2026, 10, 3, h), 3000 + h))
+const ahoraMem = Date.UTC(2026, 10, 18, 12)
+let m = await dia.mediaDelDia('2026-11-03', { ahora: ahoraMem })
+check('la media sale de las muestras mientras están enteras', m.fuente === 'muestras' && m.media?.n === 10, JSON.stringify(m).slice(0, 160))
+check('solo cuenta de 7:00 a 17:00', m.media?.fixing?.gold?.min === 3007 && m.media?.fixing?.gold?.max === 3016, JSON.stringify(m.media?.fixing))
+check('un martes es laborable', m.laborable === true && m.festivo === null, JSON.stringify(m))
+check('un día pasado ya no está en curso', m.enCurso === false)
+check('la primera lectura resume los días que ya había', (await redis().get('tqm:prices:dia:2026-11-03'))?.horario?.n === 10)
+
+// Se recortan las muestras: 1000 posteriores al día 3. La media sigue saliendo,
+// ahora del resumen guardado.
+await redis().del(SERIE)
+const desde = Date.UTC(2026, 10, 5, 0)
+for (let i = 0; i < SERIES_MAX; i++) await redis().lpush(SERIE, muestra(desde + i * 3600e3, 3100))
+m = await dia.mediaDelDia('2026-11-03', { ahora: ahoraMem })
+check('recortadas las muestras, la media sale del resumen', m.fuente === 'resumen' && m.media?.n === 10 && m.media?.fixing?.gold?.media === 3011.5, JSON.stringify(m).slice(0, 200))
+m = await dia.mediaDelDia('2026-11-02', { ahora: ahoraMem })
+check('un día sin registros no tiene media', m.fuente === null && m.media === null, JSON.stringify(m).slice(0, 160))
+
+// Cada muestra nueva se suma al resumen de su día.
+await dia.apuntarEnDia(muestra(Date.UTC(2026, 10, 3, 12, 30), 4000))
+const resumen = await redis().get('tqm:prices:dia:2026-11-03')
+check('una muestra nueva se suma a su día', resumen?.horario?.n === 11 && resumen?.dia?.n === 15, JSON.stringify(resumen?.horario).slice(0, 120))
+await dia.apuntarEnDia(muestra(Date.UTC(2026, 10, 3, 20), 4000))
+check('fuera de 7 a 17 solo cuenta para el día entero', (await redis().get('tqm:prices:dia:2026-11-03'))?.horario?.n === 11)
+
+m = await dia.mediaDelDia('2026-11-07', { ahora: ahoraMem })
+check('un sábado se calcula igual, marcado como no laborable', m.laborable === false && m.media?.n > 0, JSON.stringify(m).slice(0, 160))
+m = await dia.mediaDelDia('2026-11-18', { ahora: ahoraMem })
+check('hoy antes de las 17:00 está en curso', m.enCurso === true)
+await redis().del(SERIE)
+
 // Lo más importante: en Vercel este atajo NO puede activarse.
 process.env.VERCEL = '1'
 process.env.NODE_ENV = 'production'

@@ -110,6 +110,10 @@ La CDN guarda `/api/prices` lo que le queda de vida a la cotización, con un má
 
 Publicar guarda una nueva versión y una entrada de histórico. expectedVersion es opcional y todavía no protege atómicamente frente a dos publicaciones. Hay hasta 50 publicaciones, 12 escenarios y 1.000 muestras históricas con intervalo mínimo previsto de una hora. Los escenarios no publican automáticamente; se cargan y se publican mediante fórmulas. Un escenario nuevo al superar 12 elimina de la lista el más antiguo. Las series ofrecen ventanas de 7/30/90 días y reducen la respuesta a 240 puntos.
 
+Con `fecha=AAAA-MM-DD`, `GET /api/admin/series` devuelve la **media del día** que usa el simulador: la media aritmética de lo que se publicó ese día de 7:00 a 17:00 en hora de Canarias, con mínimo, máximo y número de registros de la cotización y del EUR/g de cada ley. No pondera por tiempo: como solo se apunta una muestra cuando alguien pide precios, si hay horas sin visitas pesan más las que tienen registro. Cada muestra nueva se suma también a un resumen diario (`tqm:prices:dia:AAAA-MM-DD`, con sumas, mínimo y máximo de las ventanas 7–17 y día entero), que no caduca; así la media sigue disponible cuando las 1.000 muestras se recortan. Mientras las muestras tengan el día entero se calcula con ellas y, después, con el resumen. La primera lectura de la serie resume una sola vez los días que las muestras ya tenían enteros (`tqm:prices:dias:relleno` marca que se ha hecho). Los días anteriores a que existieran las muestras no tienen media. Fines de semana se calculan igual y se marcan con `laborable=false`. Una fecha mal formada, inexistente, anterior a 2020 o posterior a hoy devuelve 400.
+
+En el simulador, con un día pasado, la base es esa media: la columna del día es lo publicado de verdad, y el simulado le suma lo que movería la variación con las fórmulas del borrador, de modo que con 0 % coincide con el precio de ese día. Con gramos, los importes se calculan con el EUR/g redondeado a 2 decimales en oro y 3 en plata, y después por los gramos, a céntimos. Hoy sigue usando la cotización en directo y enseña aparte la media que lleva el día.
+
 ## Alta, revisión y documentación de clientes
 
 1. `alta`: valida empresa, contacto, titular, cobro, contraseña y aceptación. Crea expediente pendiente con `enviadoEn=null` y abre sesión.
@@ -137,7 +141,7 @@ Límites actuales: 24 líneas, 100.000 g por línea, diez solicitudes pendientes
 | Grupo Redis | Datos |
 |---|---|
 | `tqm:formulas`, `tqm:formulas:history`, `tqm:formulas:scenarios` | Publicación vigente, histórico y borradores |
-| `tqm:prices:cache`, `tqm:prices:series` | Mercado y muestras |
+| `tqm:prices:cache`, `tqm:prices:series`, `tqm:prices:dia:*`, `tqm:prices:dias:relleno` | Mercado, muestras, resumen de cada día y la marca del relleno inicial |
 | `tqm:session:*`, `tqm:rl:*` | Sesiones administrativas y contadores |
 | `tqm:cliente:*` | Expedientes, índice, búsquedas email/CIF, sesiones y códigos de recuperación |
 | `tqm:doc:*` | Base64 del adaptador de documentos local |

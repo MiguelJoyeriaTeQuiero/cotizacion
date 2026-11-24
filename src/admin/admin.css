@@ -495,6 +495,21 @@
 .sim__pct.down { color: var(--down); }
 .sim__quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
 
+/* Día y gramos: la base de la simulación. */
+.sim__inputs { display: flex; align-items: center; gap: 12px 20px; flex-wrap: wrap; margin-bottom: 10px; }
+.sim__fecha { width: auto; min-width: 150px; }
+.sim__gramos { width: 120px; }
+.sim__context { margin: 0 0 16px; font-size: 13px; color: var(--ink-3); line-height: 1.5; }
+.sim__context b { color: var(--ink); font-weight: 600; }
+.sim__error { color: var(--down); }
+.sim__context + .alert { margin-top: -6px; }
+.panel .alert + .sim__control { margin-top: 16px; }
+.mini th .unidad { text-transform: none; }
+/* Un importe de cinco cifras no se parte: «10.650,00» arriba y «€» debajo. */
+.sim__tabla td.num { white-space: nowrap; }
+.mini td small.up { color: var(--up); }
+.mini td small.down { color: var(--down); }
+
 .slider {
   flex: 1;
   appearance: none;

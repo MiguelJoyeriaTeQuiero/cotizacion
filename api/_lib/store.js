@@ -323,7 +323,7 @@ export async function deleteScenario(name) {
   return next
 }
 
-export { SCENARIOS_MAX }
+export { SCENARIOS_MAX, SERIES_MAX }
 
 // ─── Sesiones ────────────────────────────────────────────────────────────────
 
